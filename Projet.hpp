@@ -1,21 +1,46 @@
 #include <iostream>
+#include <string>
+#include <vector>
+#include <map>
 
 class Pos {
 private:
 	float x, y, z;
 
 public:
-	Pos() : x(rand()%101), y(rand()%101), z(rand()%101){}; 
+	Pos() : x(rand() % 101), y(rand() % 101), z(rand() % 101){}; 
 	float getX() { return x; }
 	float getY() { return y; }
 	float getZ() { return z; }
-
 };
 
 class Plane {
 private:
+	std::string name;
 	Pos pos;
+	float trajectory;
+	float speed;
+	float fuel;
+	float conso;
 public:
-    Plane() : pos(Pos()) {}
-    Pos getPos() { return pos; }
+    Plane() : name("AA200"), pos(Pos()), trajectory(0), speed(0), fuel(100), conso(0) {}
 };
+
+class APP{
+	private:
+		vector<Plane> v;
+		int range;
+		TWR tower;
+}
+
+class TWR{
+	private:
+		map<int, Plane> parking;
+		map<int, Plane> pistes;
+		APP tower;
+}
+
+class CCR{
+	private:
+		
+}
