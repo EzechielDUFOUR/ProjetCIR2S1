@@ -1,0 +1,1 @@
+add_executable(main main.cpp "main.cpp" "Agent.cpp" "APP.cpp" "CCR.cpp" "Journal.cpp" "main.cpp" "Plane.cpp" "TWR.cpp")
