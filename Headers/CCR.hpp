@@ -9,21 +9,18 @@ class APP;
 class Journal;
 
 class CCR : public Agent {
+private:
+
+	std::vector<APP*> AllAPP_;
+	// Journal* journal_;
+	std::vector<Plane*> FlyingPlanes_;
+
 public:
-	CCR(const std::string& name, APP* app, Journal* journal);
+	CCR(const std::string& code);
+	
 	~CCR();
 
 	void run() override;
-
-	// Création d'un vol
-	void spawnFlight(const std::string& code);
-
-private:
-	mutable std::mutex mtx_;
-
-	APP* app_;
-	Journal* journal_;
-	std::vector<Plane*> enRoutePlanes_;
 
 	void handoverToAPP(Plane* p);
 };

@@ -1,38 +1,35 @@
 #pragma once
 #include "Agent.hpp"
-#include <SFML/Graphics.hpp>
 #include <vector>
 #include <mutex>
 
 class Plane;
 class Journal;
+struct Position;
 
 class TWR : public Agent {
+private:
+	Position pos_;
+
+	//Journal* journal_;
+
+	// bool runwayFree_ = true;
+
+	std::vector<Plane*> parking_;
+	const int parkingSize_;
+
 public:
-	TWR(const std::string& name, Journal* journal);
+	TWR(const std::string& code, const int&parkingSize, Position& pos);
+
 	~TWR();
 
 	void run() override;
 
 	// Demandées par APP
-	void requestLanding(Plane* p);
+	// void requestLanding(Plane* p);
 
 	// Demandées par l’avion pour décoller
-	void requestTakeoff(Plane* p);
+	// void requestTakeoff(Plane* p);
 
-private:
-	mutable std::mutex mtx_;
-	Position pos;
-
-	Journal* journal_;
-
-	bool runwayFree_ = true;
-	std::vector<bool> parking_;  // parking_[i] = occupé ?
-	std::vector<Plane*> groundPlanes_;
-
-	void authorizeLanding(Plane* p);
-	void authorizeTakeoff(Plane* p);
-	int assignParkingSlot();
-
-	void drawScene(const std::vector<Plane*>& planes);
+	Position getPos();
 };

@@ -2,28 +2,26 @@
 #include "../Headers/APP.hpp"
 #include "../Headers/TWR.hpp"
 #include "../Headers/Journal.hpp"
+#include "../Headers/Agent.hpp"
 #include <iostream>
-#include <mutex>
+#include <string>
 
-std::mutex mtx;
 
-Plane::Plane(const std::string& code, double speed, double fuel, Journal* journal) : 
-Agent(code), pos_(/*la position de la twr */ ), speed_(speed), fuel_(fuel), journal_(journal), consumption_(1), mtx_(mtx) {
-	mtx.lock();
-}
-
-PlaneState Plane::getState() const {
-	return state_;
-}
-
-void Plane::requestLanding() {
-	if (getState() == PlaneState::APPROACH) { // Si l'avion s'approche il doit demander à atterrir
-		if (app_ != NULL) {
-			app_->receivePlane(this); // Pour cela on actualise 
-		}
-	}
-}
-
-void Plane::requestTakeoff() {
+Plane::Plane(const std::string& code, double speed, APP* target, TWR* spawn) : Agent(code), speed_(speed) {
+	pos_.x = spawn->getPos().x; pos_.y = spawn->getPos().y; pos_.altitude=0;
+	trajectory_.x = (target->getPos().x - spawn->getPos().x);
+	trajectory_.y = (target->getPos().y - spawn->getPos().y);
+	trajectory_.altitude = 0;
+	double norme = sqrt(trajectory_.x * trajectory_.x + trajectory_.y * trajectory_.y);
+	trajectory_.x /= norme; // On rend le vecteur unitaire en le divisant par sa norme
+	trajectory_.y /= norme;
+};
 	
+std::string Plane::getCode() const {
+	return Agent::getCode();
 }
+
+Position Plane::getPos() const {
+	return pos_;
+}
+

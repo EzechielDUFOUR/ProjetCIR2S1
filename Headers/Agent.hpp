@@ -14,11 +14,11 @@ public:
 
 	virtual void run() = 0;  // boucle interne des agents
 
-	const std::string& getName() const;
+	const std::string& getCode() const;
 
 protected:
 	mutable std::mutex& mtx_;
-	std::string name_;
+	std::string code_;
 	std::thread thread_;
 	bool running_ = false;
 };

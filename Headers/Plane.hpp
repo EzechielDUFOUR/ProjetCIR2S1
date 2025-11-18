@@ -17,8 +17,8 @@ class Plane : public Agent {
 private :
 
 	// Journal* journal_;
-	APP* app_ = nullptr;
-	TWR* twr_ = nullptr;
+	// APP* app_ = nullptr;
+	// TWR* twr_ = nullptr;
 
 	Position pos_;
 	Position trajectory_;
@@ -27,21 +27,21 @@ private :
 	// double consumption_;
 
 public:
-	Plane(const std::string& code, double speed, );
+	Plane(const std::string& code, double speed, APP* target, TWR* spawn);
 
 	~Plane();
 
 	void run() override;
 
 	// Actions initiées par l’avion
-	void requestLanding();
-	void requestTakeoff();
+	//void requestLanding();
+	//void requestTakeoff();
 
 	// Références vers contrôleurs
-	void setAPP(APP* app);
-	void setTWR(TWR* twr);
+	//void setAPP(APP* app);
+	//void setTWR(TWR* twr);
 
 	// Accesseurs
 	std::string getCode() const;
-	Position getPosition() const;
+	Position getPos() const;
 };

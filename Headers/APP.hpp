@@ -7,10 +7,19 @@
 class Plane;
 class TWR;
 class Journal;
+struct Position;
 
 class APP : public Agent {
+private:
+	Position pos_;
+	// Journal* journal_;
+	TWR* twr_ = nullptr;
+	std::vector<Plane*> PlanesInRange_;
+	const double radius_; // rayon d'action de l'APP
+
 public:
-	APP(const std::string& name, Journal* journal);
+	APP(const std::string& code, Position& pos, TWR* twr, const double& radius);
+
 	~APP();
 
 	void run() override;
@@ -18,19 +27,5 @@ public:
 	// Un avion arrive depuis le CCR
 	void receivePlane(Plane* p);
 
-	// L’APP doit connaître sa TWR
-	void setTWR(TWR* twr);
-
-private:
-	mutable std::mutex mtx_;
-
-	Journal* journal_;
-	TWR* twr_ = nullptr;
-
-	std::vector<Plane*> approachPlanes_;
-	std::queue<Plane*> landingQueue_;
-
-	void processArrivals();
-	void assignApproach(Plane* p);
-	void requestRunway(Plane* p);
+	Position getPos();
 };
