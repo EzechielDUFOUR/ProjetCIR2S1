@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 
-APP::APP(const std::string& code, Position& pos, TWR* twr, const double& radius) : Agent(code), pos_(pos), radius_(radius), twr_(twr){}
+APP::APP(const std::string& code, Position& pos, TWR* twr, const double& radius, std::mutex& mtx) : Agent(code, mtx), pos_(pos), radius_(radius), twr_(twr){}
 
 Position APP::getPos() {
 	return pos_;
@@ -14,4 +14,8 @@ Position APP::getPos() {
 
 void APP::receivePlane(Plane* p){
 	PlanesInRange_.push_back(p);
+}
+
+void APP::run() {
+	std::cout << code_ << std::endl;
 }

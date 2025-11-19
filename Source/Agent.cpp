@@ -1,6 +1,6 @@
-#include "Agent.hpp"
+#include "../Headers/Agent.hpp"
 
-Agent::Agent(const std::string& name) : name_(name) {}
+Agent::Agent(const std::string& code, std::mutex& mtx) : code_(code), mtx_(mtx) {}
 
 Agent::~Agent() {
     stop();  // s'assurer que le thread est arrêté à la destruction
@@ -24,6 +24,6 @@ bool Agent::isRunning() const {
     return running_;
 }
 
-const std::string& Agent::getName() const {
-    return name_;
+const std::string& Agent::getCode() const {
+    return code_;
 }

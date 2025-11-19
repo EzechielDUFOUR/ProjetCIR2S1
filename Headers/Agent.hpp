@@ -2,10 +2,11 @@
 #include <iostream>
 #include <thread>
 #include <string>
+#include <mutex>
 
 class Agent {
 public:
-	Agent(const std::string& name);
+	Agent(const std::string& code, std::mutex& mtx);
 	virtual ~Agent();
 
 	void start();       // lance le thread
@@ -17,7 +18,7 @@ public:
 	const std::string& getCode() const;
 
 protected:
-	mutable std::mutex& mtx_;
+	std::mutex& mtx_;
 	std::string code_;
 	std::thread thread_;
 	bool running_ = false;

@@ -18,9 +18,7 @@ private:
 	const double radius_; // rayon d'action de l'APP
 
 public:
-	APP(const std::string& code, Position& pos, TWR* twr, const double& radius);
-
-	~APP();
+	APP(const std::string& code, Position& pos, TWR* twr, const double& radius, std::mutex& mtx);
 
 	void run() override;
 

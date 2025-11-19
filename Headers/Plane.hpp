@@ -27,9 +27,7 @@ private :
 	// double consumption_;
 
 public:
-	Plane(const std::string& code, double speed, APP* target, TWR* spawn);
-
-	~Plane();
+	Plane(const std::string& code, double speed, APP* target, TWR* spawn, std::mutex& mtx);
 
 	void run() override;
 
@@ -44,4 +42,5 @@ public:
 	// Accesseurs
 	std::string getCode() const;
 	Position getPos() const;
+	Position getTrajectory() const { return trajectory_; }
 };

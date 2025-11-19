@@ -19,9 +19,7 @@ private:
 	const int parkingSize_;
 
 public:
-	TWR(const std::string& code, const int&parkingSize, Position& pos);
-
-	~TWR();
+	TWR(const std::string& code, const int&parkingSize, Position& pos, std::mutex& mtx);
 
 	void run() override;
 

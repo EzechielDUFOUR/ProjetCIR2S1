@@ -6,8 +6,12 @@
 #include <iostream>
 #include <string>
 
-TWR::TWR(const std::string& code, const int&parkingSize, Position& pos) : Agent(code), parkingSize_(parkingSize), pos_(pos){}
+TWR::TWR(const std::string& code, const int&parkingSize, Position& pos, std::mutex& mtx) : Agent(code, mtx), parkingSize_(parkingSize), pos_(pos){}
 
 Position TWR::getPos(){
 	return pos_;
+}
+
+void TWR::run(){
+	std::cout << code_ << std::endl;
 }
