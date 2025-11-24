@@ -17,8 +17,7 @@ Plane::Plane(const std::string& code, double speed_max, APP* target, TWR* spawn,
 	trajectory_.altitude = 0;
 	make_unitary(&trajectory_);
 	spawn->addParkedPlane(this);
-	C
-};
+}
 	
 std::string Plane::getCode() const {
 	return Agent::getCode();
@@ -46,31 +45,35 @@ void Plane::run() {
 
 		std::cout << pos_.x << ", ";
 		std::cout << pos_.y << ", ";
-		std::cout << pos_.altitude << std::endl;
+		std::cout << pos_.altitude << " / SPEED : " << speed_ << std::endl;
 
 		if (pos_.altitude == 0 && requestTakeoff()){
 			state_ = TAKINGOFF;
-			trajectory_.altitude+=0.1;
+			trajectory_.altitude += 0.1;
 			std::cout << "[" << code_ << "] Requests Takeoff from APP : " << app_->getCode() << std::endl;
 		}
 
-		if (pos_.altitude >= 100) trajectory_.altitude = 0;
-
 		if (pos_.altitude != 0 && target_ == app_ && requestLanding()) {
 			state_ = LANDING;
+			trajectory_.altitude -= 0.1;
 			std::cout << "[" << code_ << "] Requests Landing to APP : " << app_->getCode() << std::endl;
-
-			running_ = false;
-			stop();
 		}
 
 		if (state_ == TAKINGOFF) speed_ = (speed_ + 1 > speed_max_) ? speed_max_ : speed_ + 1;
+		if (state_ == LANDING) {
+			speed_ = (speed_ - 10 < 0) ? 1 : speed_ - 10;
+			if (pos_.altitude == 0) {
+				running_ = false;
+				stop();
+			}
+		}
 
-		pos_.x += trajectory_.x * speed_;
-		pos_.y += trajectory_.y * speed_;
-		pos_.altitude += trajectory_.altitude * speed_;
+		pos_.x += trajectory_.x * speed_/3600;
+		pos_.y += trajectory_.y * speed_/3600;
+		pos_.altitude = (pos_.altitude + trajectory_.altitude * speed_/3600 > 10) ? 10 : pos_.altitude + trajectory_.altitude * speed_/3600;
+
+		if (pos_.altitude >= 10) trajectory_.altitude = 0;
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
-
