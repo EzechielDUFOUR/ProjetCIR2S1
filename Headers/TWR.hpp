@@ -13,10 +13,11 @@ private:
 
 	//Journal* journal_;
 
-	// bool runwayFree_ = true;
+	bool runwayFree_ = true;
 
 	std::vector<Plane*> parking_;
 	const int parkingSize_;
+	APP* app_;
 
 public:
 	TWR(const std::string& code, const int&parkingSize, Position& pos, std::mutex& mtx);
@@ -27,7 +28,12 @@ public:
 	// void requestLanding(Plane* p);
 
 	// Demandées par l’avion pour décoller
-	// void requestTakeoff(Plane* p);
+	bool requestTakeoff(Plane* p);
+	bool requestLanding(Plane* p);
 
 	Position getPos();
+
+
+	void addParkedPlane(Plane* p);
+	void deleteParkedPlane(Plane* p);
 };

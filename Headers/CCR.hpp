@@ -21,4 +21,10 @@ public:
 	void run() override;
 
 	void handoverToAPP(Plane* p, APP* app);
+	
+	void addPlane(Plane* p);
+
+	void addAPP(APP* app);
+
+	bool deletePlane(Plane* p);
 };

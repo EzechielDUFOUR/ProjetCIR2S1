@@ -13,30 +13,36 @@ struct Position {
 	double altitude = 0.0;
 };
 
+enum CurrentState { LANDING, TAKINGOFF, PARKED, FLYING, EMERGENCY };
+
 class Plane : public Agent {
 private :
 
 	// Journal* journal_;
-	// APP* app_ = nullptr;
+	APP* app_ = nullptr;
+	APP* target_ = nullptr;
 	// TWR* twr_ = nullptr;
 
 	Position pos_;
 	Position trajectory_;
-	double speed_;
+	double speed_ = 0;
+	double speed_max_;
 	// double fuel_;
 	// double consumption_;
+	
+	CurrentState state_;
 
 public:
-	Plane(const std::string& code, double speed, APP* target, TWR* spawn, std::mutex& mtx);
+	Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, std::mutex& mtx, APP* app);
 
 	void run() override;
 
 	// Actions initiées par l’avion
-	//void requestLanding();
-	//void requestTakeoff();
+	bool requestLanding();
+	bool requestTakeoff();
 
 	// Références vers contrôleurs
-	//void setAPP(APP* app);
+	void setAPP(APP* app);
 	//void setTWR(TWR* twr);
 
 	// Accesseurs
