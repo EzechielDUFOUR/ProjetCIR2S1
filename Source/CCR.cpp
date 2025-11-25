@@ -11,6 +11,7 @@ CCR::CCR(const std::string& code, std::mutex& mtx) : Agent(code, mtx){}
 
 void CCR::handoverToAPP(Plane* p, APP* app){
 	app->receivePlane(p);
+	deletePlane(p);
 }
 
 void CCR::run() {

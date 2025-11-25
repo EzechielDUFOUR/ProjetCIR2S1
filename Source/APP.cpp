@@ -37,7 +37,16 @@ bool APP::deletePlane(Plane* p){
 }
 
 void APP::run() {
-	std::cout << code_ << std::endl;
+	while (true){
+		for (auto p : PlanesInRange_) {
+			if (pow((p->getPos().x - pos_.x), 2) + pow((p->getPos().y - pos_.y), 2) > pow(radius_, 2)) { // équation du cercle pour la range des APP
+				ccr_->addPlane(p);
+				deletePlane(p);
+				// std::cout << "[" << code_ << "]" << "Added [" << p->getCode() << "] to " << app->getCode() << std::endl;
+			}
+			else {}
+		}
+	}
 }
 
 bool APP::requestTakeoff(Plane* p){
@@ -50,10 +59,14 @@ bool APP::requestTakeoff(Plane* p){
 }
 
 bool APP::requestLanding(Plane* p) {
-	if (twr_->requestTakeoff(p)) {
+	if ((pow((p->getPos().x - pos_.x), 2) + pow((p->getPos().y - pos_.y), 2) <= 100) && twr_->requestTakeoff(p)) {
 		deletePlane(p);
 		ccr_->deletePlane(p);
 		return true;
 	}
 	return false;
+}
+
+void APP::changeRunwayState(Plane* p){
+	twr_->changeRunwayState();
 }

@@ -10,14 +10,18 @@ Agent::~Agent() {
 }
 
 void Agent::start() {
-    if (running_) return; // déjà en cours d'exécution
+    if (running_) return;
+
+    if (thread_.joinable()) {
+        thread_.join();
+    }
 
     running_ = true;
-    thread_ = std::thread([this] {this->run();});
+    thread_ = std::thread([this] { this->run(); });
 }
 
 void Agent::stop() {
-    running_ = false;  // le thread doit vérifier cette variable dans run()
+    running_ = false; 
 }
 
 bool Agent::isRunning() const {

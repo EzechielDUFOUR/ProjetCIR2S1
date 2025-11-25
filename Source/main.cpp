@@ -35,6 +35,13 @@ int main() {
 	global_satellite.start();
 
 	while (true) {
+		int var;
+		std::cin >> var;
+		if (var==1){
+			A512.changeTarget(&APP_Lille);
+			A512.recomputeTrajectory();
+			A512.start();
+		}
 	}
 
 	A512.stop();

@@ -30,6 +30,7 @@ bool TWR::requestTakeoff(Plane* p){
 
 bool TWR::requestLanding(Plane* p) {
 	if (runwayFree_ && parking_.size() != parkingSize_) {
+		runwayFree_ = false;
 		addParkedPlane(p);
 		return true;
 	}
@@ -47,4 +48,8 @@ void TWR::deleteParkedPlane(Plane* p) {
 	if (it != parking_.end()) {
 		parking_.erase(it);
 	}
+}
+
+void TWR::changeRunwayState(){
+	runwayFree_ = !runwayFree_;
 }

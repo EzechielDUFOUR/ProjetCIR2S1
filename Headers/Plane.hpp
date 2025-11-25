@@ -49,4 +49,9 @@ public:
 	std::string getCode() const;
 	Position getPos() const;
 	Position getTrajectory() const { return trajectory_; }
+
+	void changeRunwayState();
+	void changeTarget(APP* app);
+
+	void recomputeTrajectory();
 };

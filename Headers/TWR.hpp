@@ -36,4 +36,6 @@ public:
 
 	void addParkedPlane(Plane* p);
 	void deleteParkedPlane(Plane* p);
+
+	void changeRunwayState();
 };
