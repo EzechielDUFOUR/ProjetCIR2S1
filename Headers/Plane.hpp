@@ -27,8 +27,8 @@ private :
 	Position trajectory_;
 	double speed_ = 0;
 	double speed_max_;
-	// double fuel_;
-	// double consumption_;
+	double fuel_ = 1000;
+	double consumption_ = 1;
 	
 	CurrentState state_;
 
@@ -52,6 +52,7 @@ public:
 
 	void changeRunwayState();
 	void changeTarget(APP* app);
+	CurrentState getState();
 
 	void recomputeTrajectory();
 };

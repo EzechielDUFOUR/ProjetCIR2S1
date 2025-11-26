@@ -9,7 +9,7 @@
 #include <chrono>
 #include <cmath>
 #include <thread>
-
+#include <sstream>
 
 Plane::Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, std::mutex& mtx, APP* app) : Agent(code, mtx), speed_max_(speed_max), app_(app), target_(target), state_(PARKED) {
 	pos_.x = spawn->getPos().x; pos_.y = spawn->getPos().y; pos_.altitude=0;
@@ -19,13 +19,6 @@ Plane::Plane(const std::string& code, double speed_max, APP* target, TWR* spawn,
 	make_unitary(&trajectory_);
 	spawn->addParkedPlane(this);
 }
-
-void Plane::recomputeTrajectory(){
-	trajectory_.x = (target_->getPos().x - app_->getPos().x);
-	trajectory_.y = (target_->getPos().y - app_->getPos().y);
-	trajectory_.altitude = 0;
-	make_unitary(&trajectory_);
-}
 	
 std::string Plane::getCode() const {
 	return Agent::getCode();
@@ -33,6 +26,10 @@ std::string Plane::getCode() const {
 
 Position Plane::getPos() const {
 	return pos_;
+}
+
+CurrentState Plane::getState() {
+	return state_;
 }
 
 bool Plane::requestTakeoff(){
@@ -53,30 +50,63 @@ void Plane::changeRunwayState(){
 
 void Plane::changeTarget(APP* app){
 	target_ = app;
+	trajectory_.x = (target_->getPos().x - app_->getPos().x);
+	trajectory_.y = (target_->getPos().y - app_->getPos().y);
+	trajectory_.altitude = 0;
+	make_unitary(&trajectory_);
 }
 
 void Plane::run() {
 	while (running_) {
-		double timer = 0.0;
-		std::cout << "[" << code_ << "] : ";
+		std::ostringstream msg;
+		msg << "[" << code_ << "] : ";
 
-		std::cout << pos_.x << ", ";
-		std::cout << pos_.y << ", ";
-		std::cout << pos_.altitude << " / SPEED : " << speed_ << std::endl;
-
-		if (state_ != TAKINGOFF && pos_.altitude == 0 && requestTakeoff()){
-			state_ = TAKINGOFF;
-			trajectory_.altitude = 0.2;
-			std::cout << "[" << code_ << "] Requests Takeoff from APP : " << app_->getCode() << std::endl;
+		msg << pos_.x << ", ";
+		msg << pos_.y << ", ";
+		msg << pos_.altitude << " / SPEED : " << speed_;
+		msg << " / FUEL : " << fuel_;
+		msg << " / STATE : ";
+		switch (state_){
+			case FLYING: msg << " FLYING" << std::endl; break;
+			case TAKINGOFF: msg << " TAKINGOFF" << std::endl; break;
+			case EMERGENCY: msg << " EMERGENCY" << std::endl; break;
+			case LANDING: msg << " LANDING" << std::endl; break;
+			case PARKED: msg << " PARKED" << std::endl; break;
+			default: msg << "RIEN !" << std::endl; break;
 		}
 
-		if (state_ != LANDING && pos_.altitude != 0 && target_ == app_ && requestLanding()) {
-			state_ = LANDING;
-			trajectory_.altitude = -0.2;
-			std::cout << "[" << code_ << "] Requests Landing to APP : " << app_->getCode() << std::endl;
+		mtx_.lock();
+		std::cout << msg.str();
+
+		if (state_ == PARKED && pos_.altitude == 0 && app_!=target_){
+			if (requestTakeoff()) {
+				state_ = TAKINGOFF;
+				trajectory_.altitude = 0.2;
+				std::cout << "[" << code_ << "] Requests Takeoff from APP : " << app_->getCode() << std::endl;
+			}
 		}
 
-		if (state_ == TAKINGOFF) speed_ = (speed_ + 10 > speed_max_) ? speed_max_ : speed_ + 10;
+		if (fuel_ < 150){
+			state_ = EMERGENCY;
+		}
+
+		if (state_ == FLYING && pos_.altitude != 0 && target_ == app_) {
+			if (requestLanding()) {
+				state_ = LANDING;
+				trajectory_.altitude = -0.2;
+				std::cout << "[" << code_ << "] Requests Landing to APP : " << app_->getCode() << std::endl;
+			}
+		}
+		mtx_.unlock();
+
+		if (state_ == TAKINGOFF) { 
+			speed_ = (speed_ + 10 > speed_max_) ? speed_max_ : speed_ + 10; 
+			if (pos_.altitude >= 9.99 && speed_==speed_max_) {
+				trajectory_.altitude = 0;
+				state_ = FLYING;
+				changeRunwayState();
+			}
+		}
 
 		if (state_ == LANDING) {
 			double dx = app_->getPos().x - pos_.x;
@@ -84,8 +114,8 @@ void Plane::run() {
 			double distance_to_app = sqrt(dx * dx + dy * dy);
 
 			if (distance_to_app <= 10.0 && distance_to_app >= 0) {
-				double factor_altitude = (distance_to_app - 0.1) / 9.0;
-				double factor_speed = distance_to_app / 9.0; 
+				double factor_altitude = (distance_to_app - 0.1) / 10.0;
+				double factor_speed = distance_to_app / 10.0; 
 				speed_ = (speed_max_) * factor_speed;
 				pos_.altitude = 10.0 * factor_altitude;
 			}
@@ -105,14 +135,9 @@ void Plane::run() {
 		pos_.x += trajectory_.x * speed_/3600;
 		pos_.y += trajectory_.y * speed_/3600;
 		pos_.altitude = (pos_.altitude + trajectory_.altitude > 10) ? pos_.altitude : (pos_.altitude + trajectory_.altitude < 0.1) ? 0 : pos_.altitude + trajectory_.altitude;
+		fuel_ -= consumption_ * speed_/3600;
 
-		if (pos_.altitude >= 10) {
-			trajectory_.altitude = 0;
-			state_ = FLYING;
-			changeRunwayState();
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 }
 
