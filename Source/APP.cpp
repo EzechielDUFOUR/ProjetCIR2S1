@@ -37,7 +37,7 @@ bool APP::deletePlane(Plane* p){
 }
 
 void APP::run() {
-	while (true){
+	while (running_){
 		for (auto p : PlanesInRange_) {
 			if (pow((p->getPos().x - pos_.x), 2) + pow((p->getPos().y - pos_.y), 2) > pow(radius_, 2)) { // équation du cercle pour la range des APP
 				ccr_->addPlane(p);

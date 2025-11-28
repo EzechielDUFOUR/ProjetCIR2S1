@@ -15,7 +15,7 @@ void CCR::handoverToAPP(Plane* p, APP* app){
 }
 
 void CCR::run() {
-	while (true) {
+	while (running_) {
 
 		for (auto p : FlyingPlanes_) {
 			for (auto app : AllAPP_) {

@@ -86,10 +86,6 @@ void Plane::run() {
 			}
 		}
 
-		if (fuel_ < 150){
-			state_ = EMERGENCY;
-		}
-
 		if (state_ == FLYING && pos_.altitude != 0 && target_ == app_) {
 			if (requestLanding()) {
 				state_ = LANDING;
@@ -98,6 +94,10 @@ void Plane::run() {
 			}
 		}
 		mtx_.unlock();
+
+		if (fuel_ < 150) {
+			state_ = EMERGENCY;
+		}
 
 		if (state_ == TAKINGOFF) { 
 			speed_ = (speed_ + 10 > speed_max_) ? speed_max_ : speed_ + 10; 
