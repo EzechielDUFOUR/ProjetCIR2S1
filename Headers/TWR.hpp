@@ -38,4 +38,5 @@ public:
 	void deleteParkedPlane(Plane* p);
 
 	void changeRunwayState();
+	bool isParkingFull();
 };

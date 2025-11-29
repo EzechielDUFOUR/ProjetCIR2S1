@@ -7,18 +7,28 @@
 #include <string>
 #include <algorithm>
 
-TWR::TWR(const std::string& code, const int&parkingSize, Position& pos, std::mutex& mtx) : Agent(code, mtx), parkingSize_(parkingSize), pos_(pos), runwayFree_(true){}
+TWR::TWR(const std::string& code, const int& parkingSize, Position& pos, std::mutex& mtx) : Agent(code, mtx), parkingSize_(parkingSize), pos_(pos), runwayFree_(true) {}
 
-Position TWR::getPos(){
+Position TWR::getPos() {
 	return pos_;
 }
 
-void TWR::run(){
-	std::cout << code_ << std::endl;
+void TWR::run() {
+	while (running_) {
+		mtx_.lock();
+		std::cout << "[" << code_ << "] " << ((runwayFree_) ? "Piste Dispo " : "Piste Indispo ") << parkingSize_ - parking_.size() << " places restantes !" << std::endl;
+		std::cout << "Parked Planes : ";
+		for (auto p : parking_) {
+			std::cout << p->getCode() << " ";
+		}
+		std::cout << std::endl;
+		mtx_.unlock();
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	}
 }
 
-bool TWR::requestTakeoff(Plane* p){
-	if (runwayFree_){
+bool TWR::requestTakeoff(Plane* p) {
+	if (runwayFree_) {
 		runwayFree_ = false;
 		deleteParkedPlane(p);
 		return true;
@@ -29,17 +39,18 @@ bool TWR::requestTakeoff(Plane* p){
 }
 
 bool TWR::requestLanding(Plane* p) {
-	if (runwayFree_ && parking_.size() != parkingSize_) {
+	if (runwayFree_ && parking_.size() < parkingSize_) {
 		runwayFree_ = false;
 		addParkedPlane(p);
 		return true;
 	}
 	else {
+		//std::cout << "Landing Refused " << ((runwayFree_) ? "Piste Dispo " : "Piste Indispo ") << parkingSize_ - parking_.size() << " places restantes !" << std::endl;
 		return false;
 	}
 }
 
-void TWR::addParkedPlane(Plane* p){
+void TWR::addParkedPlane(Plane* p) {
 	parking_.push_back(p);
 }
 
@@ -50,6 +61,10 @@ void TWR::deleteParkedPlane(Plane* p) {
 	}
 }
 
-void TWR::changeRunwayState(){
+void TWR::changeRunwayState() {
 	runwayFree_ = !runwayFree_;
+}
+
+bool TWR::isParkingFull() {
+	return parking_.size() >= parkingSize_;
 }

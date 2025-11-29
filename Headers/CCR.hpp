@@ -27,4 +27,6 @@ public:
 	void addAPP(APP* app);
 
 	bool deletePlane(Plane* p);
+
+	void detectCollision();
 };

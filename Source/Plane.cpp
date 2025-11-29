@@ -50,9 +50,31 @@ void Plane::changeRunwayState(){
 
 void Plane::changeTarget(APP* app){
 	target_ = app;
-	trajectory_.x = (target_->getPos().x - app_->getPos().x);
-	trajectory_.y = (target_->getPos().y - app_->getPos().y);
+	trajectory_.x = (target_->getPos().x - getPos().x);
+	trajectory_.y = (target_->getPos().y - getPos().y);
 	trajectory_.altitude = 0;
+	make_unitary(&trajectory_);
+}
+
+double Plane::getSpeed(){
+	return speed_;
+}
+
+void Plane::changeState(CurrentState newstate) {
+	state_ = newstate;
+}
+
+APP* Plane::getTarget() {
+	return target_;
+}
+
+void Plane::rotateTrajectory(double angleDegrees) {
+	double angleRad = angleDegrees * 3.1415 / 180.0;
+	double x = trajectory_.x;
+	double y = trajectory_.y;
+	trajectory_.x = x * cos(angleRad) + y * sin(angleRad);
+	trajectory_.y = -x * sin(angleRad) + y * cos(angleRad);
+	// Normalise le vecteur si besoin
 	make_unitary(&trajectory_);
 }
 
@@ -76,21 +98,31 @@ void Plane::run() {
 		}
 
 		mtx_.lock();
-		std::cout << msg.str();
+		//std::cout << msg.str();
 
-		if (state_ == PARKED && pos_.altitude == 0 && app_!=target_){
+		if (state_ == PARKED && pos_.altitude == 0 && app_ != target_) {
 			if (requestTakeoff()) {
 				state_ = TAKINGOFF;
 				trajectory_.altitude = 0.2;
-				std::cout << "[" << code_ << "] Requests Takeoff from APP : " << app_->getCode() << std::endl;
+				//std::cout << "[" << code_ << "] Requests Takeoff from APP : " << app_->getCode() << std::endl;
+			}
+			else {
+				//std::cout << "[" << code_ << "] Requests Takeoff REFUSED : " << std::endl;
 			}
 		}
 
-		if (state_ == FLYING && pos_.altitude != 0 && target_ == app_) {
-			if (requestLanding()) {
-				state_ = LANDING;
-				trajectory_.altitude = -0.2;
-				std::cout << "[" << code_ << "] Requests Landing to APP : " << app_->getCode() << std::endl;
+		if ((state_ == FLYING || state_ == HOLDING) && pos_.altitude != 0 && target_ == app_) {
+			if ((pow((app_->getPos().x - pos_.x), 2) + pow((app_->getPos().y - pos_.y), 2) <= 15*15) || state_ == HOLDING){
+				if (requestLanding()) {
+					state_ = LANDING;
+					changeTarget(target_);
+					trajectory_.altitude = -0.2;
+					//std::cout << "[" << code_ << "] Requests Landing to APP : " << app_->getCode() << std::endl;
+				}
+				else {
+					state_ = HOLDING;
+					//std::cout << "[" << code_ << "] Requests Landing REFUSED" << std::endl;
+				}
 			}
 		}
 		mtx_.unlock();
@@ -99,19 +131,28 @@ void Plane::run() {
 			state_ = EMERGENCY;
 		}
 
+		if (state_ == HOLDING) {
+			if (target_ != app_) state_ = FLYING;
+			float holdingAngle = atan2(pos_.y - app_->getPos().y, pos_.x - app_->getPos().x);
+			trajectory_.x = -sin(holdingAngle);
+			trajectory_.y = cos(holdingAngle);
+		}
+
 		if (state_ == TAKINGOFF) { 
 			speed_ = (speed_ + 10 > speed_max_) ? speed_max_ : speed_ + 10; 
 			if (pos_.altitude >= 9.99 && speed_==speed_max_) {
 				trajectory_.altitude = 0;
 				state_ = FLYING;
 				changeRunwayState();
+				
 			}
 		}
 
+		double dx = app_->getPos().x - pos_.x;
+		double dy = app_->getPos().y - pos_.y;
+		double distance_to_app = sqrt(dx * dx + dy * dy);
+
 		if (state_ == LANDING) {
-			double dx = app_->getPos().x - pos_.x;
-			double dy = app_->getPos().y - pos_.y;
-			double distance_to_app = sqrt(dx * dx + dy * dy);
 
 			if (distance_to_app <= 10.0 && distance_to_app >= 0) {
 				double factor_altitude = (distance_to_app - 0.1) / 10.0;
@@ -122,14 +163,14 @@ void Plane::run() {
 
 			speed_ = std::max(speed_, 0.0);
 			pos_.altitude = std::max(pos_.altitude, 0.0);
+		}
 
-			if (pos_.altitude == 0 && distance_to_app <= 0.01){
-				state_ = PARKED;
-				pos_.x = app_->getPos().x; pos_.y = app_->getPos().y, pos_.altitude=0;
-				changeRunwayState();
-				running_ = false;
-				stop();
-			}
+		if (state_ != TAKINGOFF && state_ != PARKED && pos_.altitude == 0 && distance_to_app <= 0.01) {
+			state_ = PARKED;
+			pos_.x = app_->getPos().x; pos_.y = app_->getPos().y, pos_.altitude = 0;
+			changeRunwayState();
+			running_ = false;
+			stop();
 		}
 
 		pos_.x += trajectory_.x * speed_/3600;

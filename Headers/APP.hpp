@@ -30,7 +30,7 @@ public:
 	double getRadius();
 
 	Position getPos();
-
+	TWR* getTWR();
 	bool requestTakeoff(Plane* p);
 	bool requestLanding(Plane* p);
 	void changeRunwayState(Plane* p);

@@ -50,7 +50,7 @@ void APP::run() {
 }
 
 bool APP::requestTakeoff(Plane* p){
-	if (twr_->requestTakeoff(p)){
+	if (twr_ != nullptr && twr_->requestTakeoff(p)){
 		receivePlane(p);
 		ccr_->addPlane(p);
 		return true;
@@ -59,7 +59,7 @@ bool APP::requestTakeoff(Plane* p){
 }
 
 bool APP::requestLanding(Plane* p) {
-	if ((pow((p->getPos().x - pos_.x), 2) + pow((p->getPos().y - pos_.y), 2) <= 100) && twr_->requestTakeoff(p)) {
+	if (twr_->requestLanding(p)) {
 		deletePlane(p);
 		ccr_->deletePlane(p);
 		return true;
@@ -69,4 +69,8 @@ bool APP::requestLanding(Plane* p) {
 
 void APP::changeRunwayState(Plane* p){
 	twr_->changeRunwayState();
+}
+
+TWR* APP::getTWR(){
+	return twr_;
 }

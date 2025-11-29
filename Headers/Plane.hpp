@@ -13,7 +13,7 @@ struct Position {
 	double altitude = 0.0;
 };
 
-enum CurrentState { LANDING, TAKINGOFF, PARKED, FLYING, EMERGENCY };
+enum CurrentState { LANDING, TAKINGOFF, PARKED, FLYING, EMERGENCY, HOLDING, EVASION };
 
 class Plane : public Agent {
 private :
@@ -52,7 +52,14 @@ public:
 
 	void changeRunwayState();
 	void changeTarget(APP* app);
+	void changeState(CurrentState newstate);
+
+	APP* getTarget();
+
 	CurrentState getState();
 
 	void recomputeTrajectory();
+	double getSpeed();
+
+	void rotateTrajectory(double angleDegrees);
 };
