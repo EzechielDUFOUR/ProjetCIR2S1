@@ -29,4 +29,8 @@ public:
 	bool deletePlane(Plane* p);
 
 	void detectCollision();
+
+	APP* getRandomTarget(APP* app);
+
+	std::vector<APP*> getAPPS();
 };

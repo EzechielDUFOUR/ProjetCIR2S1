@@ -78,6 +78,10 @@ void Plane::rotateTrajectory(double angleDegrees) {
 	make_unitary(&trajectory_);
 }
 
+APP* Plane::getRandomTarget() {
+	return app_->getRandomTarget();
+}
+
 void Plane::run() {
 	while (running_) {
 		std::ostringstream msg;
@@ -98,12 +102,12 @@ void Plane::run() {
 		}
 
 		mtx_.lock();
-		//std::cout << msg.str();
+		std::cout << msg.str();
 
 		if (state_ == PARKED && pos_.altitude == 0 && app_ != target_) {
 			if (requestTakeoff()) {
 				state_ = TAKINGOFF;
-				trajectory_.altitude = 0.2;
+				trajectory_.altitude = 0.1;
 				//std::cout << "[" << code_ << "] Requests Takeoff from APP : " << app_->getCode() << std::endl;
 			}
 			else {
@@ -112,7 +116,7 @@ void Plane::run() {
 		}
 
 		if ((state_ == FLYING || state_ == HOLDING) && pos_.altitude != 0 && target_ == app_) {
-			if ((pow((app_->getPos().x - pos_.x), 2) + pow((app_->getPos().y - pos_.y), 2) <= 15*15) || state_ == HOLDING){
+			if ((pow((app_->getPos().x - pos_.x), 2) + pow((app_->getPos().y - pos_.y), 2) <= 100) || state_ == HOLDING){
 				if (requestLanding()) {
 					state_ = LANDING;
 					changeTarget(target_);
@@ -127,13 +131,13 @@ void Plane::run() {
 		}
 		mtx_.unlock();
 
-		if (fuel_ < 150) {
+		/*if (fuel_ < 150) {
 			state_ = EMERGENCY;
-		}
+		}*/
 
 		if (state_ == HOLDING) {
 			if (target_ != app_) state_ = FLYING;
-			float holdingAngle = atan2(pos_.y - app_->getPos().y, pos_.x - app_->getPos().x);
+			float holdingAngle = atan2(pos_.y - target_->getPos().y, pos_.x - target_->getPos().x);
 			trajectory_.x = -sin(holdingAngle);
 			trajectory_.y = cos(holdingAngle);
 		}
@@ -165,18 +169,21 @@ void Plane::run() {
 			pos_.altitude = std::max(pos_.altitude, 0.0);
 		}
 
-		if (state_ != TAKINGOFF && state_ != PARKED && pos_.altitude == 0 && distance_to_app <= 0.01) {
+		if (state_ != TAKINGOFF && pos_.altitude == 0 && distance_to_app <= 0.01) {
 			state_ = PARKED;
+			fuel_ = 1000;
 			pos_.x = app_->getPos().x; pos_.y = app_->getPos().y, pos_.altitude = 0;
 			changeRunwayState();
 			running_ = false;
 			stop();
 		}
 
-		pos_.x += trajectory_.x * speed_/3600;
-		pos_.y += trajectory_.y * speed_/3600;
-		pos_.altitude = (pos_.altitude + trajectory_.altitude > 10) ? pos_.altitude : (pos_.altitude + trajectory_.altitude < 0.1) ? 0 : pos_.altitude + trajectory_.altitude;
-		fuel_ -= consumption_ * speed_/3600;
+		pos_.x += trajectory_.x * speed_/360;
+		pos_.y += trajectory_.y * speed_/360;
+		if (state_ != LANDING) {
+			pos_.altitude = (pos_.altitude + trajectory_.altitude > 10) ? pos_.altitude : (pos_.altitude + trajectory_.altitude < 0.1) ? 0 : pos_.altitude + trajectory_.altitude;
+		}
+		fuel_ -= consumption_ * speed_/360;
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}

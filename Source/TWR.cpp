@@ -15,15 +15,25 @@ Position TWR::getPos() {
 
 void TWR::run() {
 	while (running_) {
-		mtx_.lock();
+		/*mtx_.lock();
 		std::cout << "[" << code_ << "] " << ((runwayFree_) ? "Piste Dispo " : "Piste Indispo ") << parkingSize_ - parking_.size() << " places restantes !" << std::endl;
 		std::cout << "Parked Planes : ";
 		for (auto p : parking_) {
 			std::cout << p->getCode() << " ";
 		}
 		std::cout << std::endl;
-		mtx_.unlock();
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		mtx_.unlock();*/
+		for (auto p : parking_) {
+			if (p->getState() == PARKED) {
+				if (rand() % 100 > 80) {
+					p->changeTarget(p->getRandomTarget());
+					p->start();
+					break;
+					//std::cout << p->getCode() << " / " << p->getTarget()->getCode();
+				}
+			}
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 

@@ -28,7 +28,7 @@ private :
 	double speed_ = 0;
 	double speed_max_;
 	double fuel_ = 1000;
-	double consumption_ = 1;
+	double consumption_ = 0.2;
 	
 	CurrentState state_;
 
@@ -62,4 +62,6 @@ public:
 	double getSpeed();
 
 	void rotateTrajectory(double angleDegrees);
+
+	APP* getRandomTarget();
 };

@@ -37,15 +37,53 @@ bool APP::deletePlane(Plane* p){
 }
 
 void APP::run() {
-	while (running_){
+	while (running_) {
+
+		std::vector<Plane*> toRemove;
 		for (auto p : PlanesInRange_) {
-			if (pow((p->getPos().x - pos_.x), 2) + pow((p->getPos().y - pos_.y), 2) > pow(radius_, 2)) { // équation du cercle pour la range des APP
-				ccr_->addPlane(p);
-				deletePlane(p);
-				// std::cout << "[" << code_ << "]" << "Added [" << p->getCode() << "] to " << app->getCode() << std::endl;
+			double dx = p->getPos().x - pos_.x;
+			double dy = p->getPos().y - pos_.y;
+
+			if (dx * dx + dy * dy > radius_ * radius_) {
+				toRemove.push_back(p);
 			}
-			else {}
+
+			for (auto p2 : PlanesInRange_) {
+				if (p != p2) {
+					Position pFuture, p2Future;
+					// Calcul de la position future dans 5 ticks
+					pFuture.x = p->getPos().x + 5 * p->getTrajectory().x * p->getSpeed() / 360; pFuture.y = p->getPos().y + 5 * p->getTrajectory().y * p->getSpeed() / 360;
+					p2Future.x = p2->getPos().x + 5 * p2->getTrajectory().x * p2->getSpeed() / 360; p2Future.y = p2->getPos().y + 5 * p2->getTrajectory().y * p2->getSpeed() / 360;
+
+					double dx = pFuture.x - p2Future.x, dy = pFuture.y - p2Future.y;
+					double dist = sqrt(dx * dx + dy * dy);
+					if (p->getState() != HOLDING && p2->getState() != HOLDING) {
+						if (dist <= 10.0 && (p->getState() != EVASION || p2->getState() != EVASION) && abs(p->getPos().altitude - p2->getPos().altitude) <= 0.1) {
+							p->rotateTrajectory(-30);
+							p->changeState(EVASION);
+							p2->rotateTrajectory(-30);
+							p2->changeState(EVASION);
+							std::cout << "Collision entre " << p->getCode() << " et " << p2->getCode() << std::endl;
+						}
+						else if (sqrt((p->getPos().x - p2->getPos().x) * (p->getPos().x - p2->getPos().x) + (p->getPos().y - p2->getPos().y) * (p->getPos().y - p2->getPos().y)) >= 10.0 && p->getState() == EVASION && p2->getState() == EVASION) {
+							p->changeState(FLYING);
+							p->changeTarget(p->getTarget());
+							p2->changeState(FLYING);
+							p2->changeTarget(p2->getTarget());
+						}
+					}
+
+				}
+			}
 		}
+
+		// retrait hors boucle
+		for (auto p : toRemove) {
+			ccr_->addPlane(p);
+			deletePlane(p);
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 }
 
@@ -73,4 +111,8 @@ void APP::changeRunwayState(Plane* p){
 
 TWR* APP::getTWR(){
 	return twr_;
+}
+
+APP* APP::getRandomTarget() {
+	return ccr_->getRandomTarget(this);
 }
