@@ -32,6 +32,8 @@ private :
 	
 	CurrentState state_;
 
+	bool isEvading;
+
 public:
 	Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, std::mutex& mtx, APP* app);
 
@@ -41,8 +43,12 @@ public:
 	bool requestLanding();
 	bool requestTakeoff();
 
+	void requestLanding2();
+	void requestTakeoff2();
+
 	// Références vers contrôleurs
 	void setAPP(APP* app);
+	void setAltitude(double altitude);
 	//void setTWR(TWR* twr);
 
 	// Accesseurs
@@ -50,7 +56,9 @@ public:
 	Position getPos() const;
 	Position getTrajectory() const { return trajectory_; }
 
-	void changeRunwayState();
+	void changeRunwayToFree();
+	void changeRunwayToOccupied();
+
 	void changeTarget(APP* app);
 	void changeState(CurrentState newstate);
 
@@ -64,4 +72,9 @@ public:
 	void rotateTrajectory(double angleDegrees);
 
 	APP* getRandomTarget();
+
+	bool getEvasion();
+	void changeEvasion();
+
+	APP* getAPP();
 };

@@ -13,11 +13,13 @@ private:
 
 	//Journal* journal_;
 
-	bool runwayFree_ = true;
+	bool volatile runwayFree_ = true;
 
 	std::vector<Plane*> parking_;
 	const int parkingSize_;
 	APP* app_;
+
+	std::deque<Plane*> waitingLine_;
 
 public:
 	TWR(const std::string& code, const int&parkingSize, Position& pos, std::mutex& mtx);
@@ -31,12 +33,17 @@ public:
 	bool requestTakeoff(Plane* p);
 	bool requestLanding(Plane* p);
 
+	void requestTakeoff2(Plane* p);
+	void requestLanding2(Plane* p);
+
 	Position getPos();
 
+
+	void changeRunwayToFree();
+    void changeRunwayToOccupied();
 
 	void addParkedPlane(Plane* p);
 	void deleteParkedPlane(Plane* p);
 
-	void changeRunwayState();
 	bool isParkingFull();
 };

@@ -33,7 +33,12 @@ public:
 	TWR* getTWR();
 	bool requestTakeoff(Plane* p);
 	bool requestLanding(Plane* p);
-	void changeRunwayState(Plane* p);
+
+	void requestTakeoff2(Plane* p);
+	void requestLanding2(Plane* p);
+
+	void changeRunwayToOccupied(Plane* p);
+	void changeRunwayToFree(Plane* p);
 
 	APP* getRandomTarget();
 };

@@ -14,27 +14,50 @@ Position TWR::getPos() {
 }
 
 void TWR::run() {
-	while (running_) {
-		/*mtx_.lock();
-		std::cout << "[" << code_ << "] " << ((runwayFree_) ? "Piste Dispo " : "Piste Indispo ") << parkingSize_ - parking_.size() << " places restantes !" << std::endl;
-		std::cout << "Parked Planes : ";
-		for (auto p : parking_) {
-			std::cout << p->getCode() << " ";
-		}
-		std::cout << std::endl;
-		mtx_.unlock();*/
-		for (auto p : parking_) {
-			if (p->getState() == PARKED) {
-				if (rand() % 100 > 80) {
-					p->changeTarget(p->getRandomTarget());
-					p->start();
-					break;
-					//std::cout << p->getCode() << " / " << p->getTarget()->getCode();
-				}
-			}
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	}
+    while (running_) {
+
+        //mtx_.lock();
+        //std::cout << "[" << getCode() << "] " << parkingSize_ - parking_.size() << " places restantes / " << ((runwayFree_) ? "Runway Free" : "Runway Occupied") << std::endl;
+        //mtx_.unlock();
+
+        // Départs aléatoires (sans mutex, fait avant le lock)
+        for (auto p : parking_) {
+            if (p->getState() == PARKED && rand() % 100 > 80) {
+                p->changeTarget(p->getRandomTarget());
+                requestTakeoff2(p); // Ajoute à la queue
+                p->start(); // Démarre le thread
+                break;
+            }
+        }
+
+        // Traite la queue si piste libre
+        if (runwayFree_ && !waitingLine_.empty()) {
+            Plane* p = waitingLine_.front();
+            waitingLine_.pop_front();
+            runwayFree_ = false;
+
+            if (p->getState() == PARKED) {
+                p->getAPP()->receivePlane(p);
+                deleteParkedPlane(p);
+                p->changeState(TAKINGOFF);
+                p->setAltitude(0.2);
+            }
+            else if (p->getState() == FLYING || p->getState() == HOLDING) {
+                addParkedPlane(p);
+                p->changeState(LANDING);
+                p->setAltitude(-0.2);
+            }
+        }
+
+        // Met en HOLDING ceux qui attendent
+        for (auto p : waitingLine_) {
+            if (p && p->getState() != PARKED && p->getState() != LANDING) {
+                p->changeState(HOLDING);
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 }
 
 bool TWR::requestTakeoff(Plane* p) {
@@ -49,15 +72,31 @@ bool TWR::requestTakeoff(Plane* p) {
 }
 
 bool TWR::requestLanding(Plane* p) {
+	mtx_.lock();
+	bool result = false;
 	if (runwayFree_ && parking_.size() < parkingSize_) {
 		runwayFree_ = false;
 		addParkedPlane(p);
-		return true;
+		result = true;
 	}
-	else {
-		//std::cout << "Landing Refused " << ((runwayFree_) ? "Piste Dispo " : "Piste Indispo ") << parkingSize_ - parking_.size() << " places restantes !" << std::endl;
-		return false;
-	}
+	mtx_.unlock();
+	return result;
+}
+
+void TWR::requestTakeoff2(Plane* p) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    auto it = std::find(waitingLine_.begin(), waitingLine_.end(), p);
+    if (it == waitingLine_.end()) {
+        waitingLine_.push_back(p);
+    }
+}
+
+void TWR::requestLanding2(Plane* p) {
+    std::lock_guard<std::mutex> lock(mtx_);
+    auto it = std::find(waitingLine_.begin(), waitingLine_.end(), p);
+    if (it == waitingLine_.end()) {
+        waitingLine_.push_back(p);
+    }
 }
 
 void TWR::addParkedPlane(Plane* p) {
@@ -71,9 +110,17 @@ void TWR::deleteParkedPlane(Plane* p) {
 	}
 }
 
-void TWR::changeRunwayState() {
-	runwayFree_ = !runwayFree_;
+void TWR::changeRunwayToFree() {
+    std::lock_guard<std::mutex> lock(mtx_);
+    runwayFree_ = true;
+    std::cout << "Runway freed : " << getCode() << std::endl;
 }
+
+void TWR::changeRunwayToOccupied() {
+    std::lock_guard<std::mutex> lock(mtx_);
+    runwayFree_ = false;
+}
+
 
 bool TWR::isParkingFull() {
 	return parking_.size() >= parkingSize_;

@@ -190,12 +190,6 @@ int main() {
 	global_satellite.addAPP(&APP_Marseille);
 	global_satellite.addAPP(&APP_Bordeaux);
 	global_satellite.addAPP(&APP_Brest);
-
-	/*global_satellite.run();
-	TWR_Paris.run();
-	APP_Paris.run();
-	TWR_Lille.run();
-	APP_Lille.run();*/
 	
 	global_satellite.start();
 	//APP_Lille.start();
@@ -219,9 +213,9 @@ int main() {
 	//B737.start();
 
 	std::vector<APP*> apps = global_satellite.getAPPS();//{ &APP_Lille, &APP_Paris, &APP_Ajaccio };
-	std::vector<Plane*> planes = { &A512, &B737, &B738, &B739, &B740, &B741, &B742 };
+	std::vector<Plane*> planes = { &A512 , &B737, &B738, &B739, &B740, &B741, &B742 };
 
-	std::thread t(inputThread, std::ref(B740), std::ref(APP_Lille), std::ref(APP_Ajaccio));
+	std::thread t(inputThread, std::ref(A512), std::ref(APP_Lille), std::ref(APP_Ajaccio));
 
 	initWindow(apps, planes);
 
@@ -245,5 +239,5 @@ int main() {
 	//APP_Paris.stop();
 	//APP_Ajaccio.stop();
 	A512.stop();
-	B737.stop();
+	//B737.stop();
 }
