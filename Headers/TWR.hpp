@@ -2,6 +2,8 @@
 #include "Agent.hpp"
 #include <vector>
 #include <mutex>
+#include <atomic>
+#include <deque>
 
 class Plane;
 class Journal;
@@ -13,7 +15,7 @@ private:
 
 	//Journal* journal_;
 
-	bool volatile runwayFree_ = true;
+	std::atomic<bool> runwayFree_{true};
 
 	std::vector<Plane*> parking_;
 	const int parkingSize_;
@@ -26,10 +28,10 @@ public:
 
 	void run() override;
 
-	// Demand�es par APP
+	// Demandées par APP
 	// void requestLanding(Plane* p);
 
-	// Demand�es par l�avion pour d�coller
+	// Demandées par l'avion pour décoller
 	bool requestTakeoff(Plane* p);
 	bool requestLanding(Plane* p);
 

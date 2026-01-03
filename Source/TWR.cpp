@@ -100,25 +100,23 @@ void TWR::run() {
 }
 
 bool TWR::requestTakeoff(Plane* p) {
+    std::lock_guard<std::mutex> lock(mtx_);
     if (runwayFree_) {
         runwayFree_ = false;
         deleteParkedPlane(p);
         return true;
     }
-    else {
-        return false;
-    }
+    return false;
 }
 
 bool TWR::requestLanding(Plane* p) {
-    mtx_.lock();
+    std::lock_guard<std::mutex> lock(mtx_);
     bool result = false;
     if (runwayFree_ && parking_.size() < parkingSize_) {
         runwayFree_ = false;
         addParkedPlane(p);
         result = true;
     }
-    mtx_.unlock();
     return result;
 }
 
@@ -162,7 +160,7 @@ void TWR::changeRunwayToOccupied() {
     runwayFree_ = false;
 }
 
-
 bool TWR::isParkingFull() {
+    std::lock_guard<std::mutex> lock(mtx_);
     return parking_.size() >= parkingSize_;
 }

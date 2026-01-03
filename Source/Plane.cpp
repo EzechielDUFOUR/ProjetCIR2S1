@@ -72,7 +72,7 @@ void Plane::changeTarget(APP* app) {
     trajectory_.y = (target_->getPos().y - getPos().y);
     trajectory_.altitude = 0;
     make_unitary(&trajectory_);
-    mtx_.lock();
+    mtx_.unlock();
 }
 
 double Plane::getSpeed() {
