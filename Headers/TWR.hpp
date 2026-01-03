@@ -2,8 +2,6 @@
 #include "Agent.hpp"
 #include <vector>
 #include <mutex>
-#include <atomic>
-#include <deque>
 
 class Plane;
 class Journal;
@@ -15,7 +13,7 @@ private:
 
 	//Journal* journal_;
 
-	std::atomic<bool> runwayFree_{true};
+	bool runwayFree_ = true;  // Retiré volatile - la protection mutex suffit
 
 	std::vector<Plane*> parking_;
 	const int parkingSize_;
@@ -24,14 +22,14 @@ private:
 	std::deque<Plane*> waitingLine_;
 
 public:
-	TWR(const std::string& code, const int&parkingSize, Position& pos);
+	TWR(const std::string& code, const int& parkingSize, Position& pos);
 
 	void run() override;
 
-	// Demandées par APP
+	// Demand�es par APP
 	// void requestLanding(Plane* p);
 
-	// Demandées par l'avion pour décoller
+	// Demand�es par l�avion pour d�coller
 	bool requestTakeoff(Plane* p);
 	bool requestLanding(Plane* p);
 
@@ -42,7 +40,7 @@ public:
 
 
 	void changeRunwayToFree();
-    void changeRunwayToOccupied();
+	void changeRunwayToOccupied();
 
 	void addParkedPlane(Plane* p);
 	void deleteParkedPlane(Plane* p);

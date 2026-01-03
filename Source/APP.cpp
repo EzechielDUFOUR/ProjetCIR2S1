@@ -18,14 +18,19 @@ double APP::getRadius() {
 }
 
 bool APP::receivePlane(Plane* p){
-	std::lock_guard<std::mutex> lock(mtx_);
-	auto it = std::find(PlanesInRange_.begin(), PlanesInRange_.end(), p);
-	if (it == PlanesInRange_.end()) {
-		PlanesInRange_.push_back(p);
-		p->setAPP(this);
-		return true;
+	{
+		std::lock_guard<std::mutex> lock(mtx_);
+		auto it = std::find(PlanesInRange_.begin(), PlanesInRange_.end(), p);
+		if (it == PlanesInRange_.end()) {
+			PlanesInRange_.push_back(p);
+		} else {
+			return false;
+		}
 	}
-	return false;
+	
+	// Appel externe APRÈS avoir relâché le mutex
+	p->setAPP(this);
+	return true;
 }
 
 bool APP::deletePlane(Plane* p){

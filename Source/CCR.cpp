@@ -12,7 +12,6 @@ CCR::CCR(const std::string& code) : Agent(code){}
 void CCR::handoverToAPP(Plane* p, APP* app){
 	app->receivePlane(p);
 	deletePlane(p);
-	p->setAPP(app);
 }
 
 APP* CCR::getRandomTarget(APP* app) {
