@@ -11,50 +11,50 @@
 #include <thread>
 #include <sstream>
 
-Plane::Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, std::mutex& mtx, APP* app) : Agent(code, mtx), speed_max_(speed_max), app_(app), target_(target), state_(PARKED) {
-	pos_.x = spawn->getPos().x; pos_.y = spawn->getPos().y; pos_.altitude=0;
-	trajectory_.x = (target->getPos().x - spawn->getPos().x);
-	trajectory_.y = (target->getPos().y - spawn->getPos().y);
-	trajectory_.altitude = 0;
-	make_unitary(&trajectory_);
-	spawn->addParkedPlane(this);
+Plane::Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, APP* app) : Agent(code), speed_max_(speed_max), app_(app), target_(target), state_(PARKED) {
+    pos_.x = spawn->getPos().x; pos_.y = spawn->getPos().y; pos_.altitude = 0;
+    trajectory_.x = (target->getPos().x - spawn->getPos().x);
+    trajectory_.y = (target->getPos().y - spawn->getPos().y);
+    trajectory_.altitude = 0;
+    make_unitary(&trajectory_);
+    spawn->addParkedPlane(this);
 }
-	
+
 std::string Plane::getCode() const {
-	return Agent::getCode();
+    return Agent::getCode();
 }
 
 Position Plane::getPos() const {
-	return pos_;
+    return pos_;
 }
 
 CurrentState Plane::getState() {
-	return state_;
+    return state_;
 }
 
-bool Plane::requestTakeoff(){
-	return app_->requestTakeoff(this);
+bool Plane::requestTakeoff() {
+    return app_->requestTakeoff(this);
 }
 
-void Plane::setAltitude(double altitude){
-	trajectory_.altitude = altitude;
+void Plane::setAltitude(double altitude) {
+    trajectory_.altitude = altitude;
 }
 
-bool Plane::requestLanding(){
-	return app_->requestLanding(this);
+bool Plane::requestLanding() {
+    return app_->requestLanding(this);
 }
 
 void Plane::requestTakeoff2() {
-	app_->requestTakeoff2(this);
+    app_->requestTakeoff2(this);
 }
 
 
 void Plane::requestLanding2() {
-	app_->requestLanding2(this);
+    app_->requestLanding2(this);
 }
 
 void Plane::setAPP(APP* app) {
-	app_ = app;
+    app_ = app;
 }
 
 void Plane::changeRunwayToFree() {
@@ -65,45 +65,47 @@ void Plane::changeRunwayToOccupied() {
     app_->getTWR()->changeRunwayToOccupied();
 }
 
-void Plane::changeTarget(APP* app){
-	target_ = app;
-	trajectory_.x = (target_->getPos().x - getPos().x);
-	trajectory_.y = (target_->getPos().y - getPos().y);
-	trajectory_.altitude = 0;
-	make_unitary(&trajectory_);
+void Plane::changeTarget(APP* app) {
+    mtx_.lock();
+    target_ = app;
+    trajectory_.x = (target_->getPos().x - getPos().x);
+    trajectory_.y = (target_->getPos().y - getPos().y);
+    trajectory_.altitude = 0;
+    make_unitary(&trajectory_);
+    mtx_.lock();
 }
 
-double Plane::getSpeed(){
-	return speed_;
+double Plane::getSpeed() {
+    return speed_;
 }
 
 void Plane::changeState(CurrentState newstate) {
-	state_ = newstate;
+    state_ = newstate;
 }
 
 APP* Plane::getTarget() {
-	return target_;
+    return target_;
 }
 
 void Plane::rotateTrajectory(double angleDegrees) {
-	double angleRad = angleDegrees * 3.1415 / 180.0;
-	double x = trajectory_.x;
-	double y = trajectory_.y;
-	trajectory_.x = x * cos(angleRad) + y * sin(angleRad);
-	trajectory_.y = -x * sin(angleRad) + y * cos(angleRad);
-	// Normalise le vecteur si besoin
-	make_unitary(&trajectory_);
+    double angleRad = angleDegrees * 3.1415 / 180.0;
+    double x = trajectory_.x;
+    double y = trajectory_.y;
+    trajectory_.x = x * cos(angleRad) + y * sin(angleRad);
+    trajectory_.y = -x * sin(angleRad) + y * cos(angleRad);
+    // Normalise le vecteur si besoin
+    make_unitary(&trajectory_);
 }
 
 APP* Plane::getRandomTarget() {
-	return app_->getRandomTarget();
+    return app_->getRandomTarget();
 }
 
 bool Plane::getEvasion() {
-	return isEvading;
+    return isEvading;
 }
 void Plane::changeEvasion() {
-	isEvading = !isEvading;
+    isEvading = !isEvading;
 }
 
 APP* Plane::getAPP() {
@@ -134,11 +136,11 @@ void Plane::run() {
         msg << "Destination " << getTarget()->getCode() << std::endl;
         msg << "APP actuelle : " << getAPP()->getCode() << std::endl;
 
-        mtx_.lock();
-        std::cout << msg.str();
-        mtx_.unlock();
+        //mtx_.lock();
+        //std::cout << msg.str();
+        //mtx_.unlock();
 
-        // Demande décollage
+        // Demande dÃ©collage
         if (state_ == PARKED && pos_.altitude == 0 && app_ != target_) {
             requestTakeoff2(); // Nouveau
         }
@@ -154,7 +156,9 @@ void Plane::run() {
         // HOLDING pattern
         if (state_ == HOLDING) {
             if (!target_ || target_ != app_) {
+                mtx_.lock();
                 state_ = FLYING;
+                mtx_.unlock();
             }
             else {
                 const double HOLDING_RADIUS = 10.0;
@@ -166,46 +170,61 @@ void Plane::run() {
                 trajectory_.x = -dy / dist;
                 trajectory_.y = dx / dist;
 
-                if (dist > HOLDING_RADIUS + 2.0 || dist < HOLDING_RADIUS - 2.0) {
+                if (dist > HOLDING_RADIUS || dist < HOLDING_RADIUS) {
                     double correction = (HOLDING_RADIUS - dist) * 0.1;
+                    mtx_.lock();
                     trajectory_.x += correction * dx / dist;
                     trajectory_.y += correction * dy / dist;
                     make_unitary(&trajectory_);
+                    mtx_.unlock();
                 }
             }
         }
 
         // TAKINGOFF
         if (state_ == TAKINGOFF) {
+            mtx_.lock();
             speed_ = (speed_ + 10 > speed_max_) ? speed_max_ : speed_ + 10;
+            std::cout << "[" << code_ << "] TAKINGOFF altitude=" << pos_.altitude << " trajectory.altitude=" << trajectory_.altitude << std::endl;
             if (pos_.altitude >= 9.99) {
                 trajectory_.altitude = 0;
                 state_ = FLYING;
                 changeRunwayToFree();
+                std::cout << "[" << code_ << "] passe en FLYING, piste liberee" << std::endl;
             }
+            mtx_.unlock();
         }
 
         if (state_ == FLYING && speed_ <= speed_max_) {
+            mtx_.lock();
             speed_ = (speed_ + 10 > speed_max_) ? speed_max_ : speed_ + 10;
+            mtx_.unlock();
         }
 
         // LANDING
-        double dx = app_->getPos().x - pos_.x;
-        double dy = app_->getPos().y - pos_.y;
+        double dx = target_->getPos().x - pos_.x;
+        double dy = target_->getPos().y - pos_.y;
         double distance_to_app = sqrt(dx * dx + dy * dy);
 
         if (state_ == LANDING) {
             changeTarget(target_);
-            if (distance_to_app <= 10.0 && distance_to_app >= 0) {
+            
+            if (distance_to_app <= 10.01 && distance_to_app >= 0) {
                 double factor_altitude = (distance_to_app - 0.1) / 10.0;
                 double factor_speed = distance_to_app / 10.0;
+                mtx_.lock();
                 speed_ = (speed_max_)*factor_speed;
                 pos_.altitude = 10.0 * factor_altitude;
+                mtx_.unlock();
             }
+
+            mtx_.lock();
             speed_ = std::max(speed_, 0.0);
             pos_.altitude = std::max(pos_.altitude, 0.0);
-            if (pos_.altitude <= 0.1 && distance_to_app <= 0.01 && fuel_ != 1000) {
-                std::cout << "FEUR" << std::endl;
+            mtx_.unlock();
+
+            if (pos_.altitude <= 0.1 && distance_to_app <= 1.0) {
+                mtx_.lock();
                 state_ = PARKED;
                 fuel_ = 1000;
                 speed_ = 0;
@@ -213,22 +232,27 @@ void Plane::run() {
                 pos_.y = app_->getPos().y;
                 pos_.altitude = 0;
                 changeRunwayToFree();
-                running_ = false;
-                stop();
+                std::cout << "[" << code_ << "] a atterri a " << app_->getCode() << std::endl;
+                mtx_.unlock();
             }
         }
 
         // Mouvement
+        mtx_.lock();
+
         pos_.x += trajectory_.x * speed_ / 360;
         pos_.y += trajectory_.y * speed_ / 360;
 
         if (state_ != LANDING) {
-            pos_.altitude = (pos_.altitude + trajectory_.altitude > 10) ? pos_.altitude :
+            pos_.altitude = (pos_.altitude + trajectory_.altitude > 10) ? 10 :
                 (pos_.altitude + trajectory_.altitude < 0.1) ? 0 :
                 pos_.altitude + trajectory_.altitude;
         }
 
         fuel_ -= consumption_ * speed_ / 360;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        mtx_.unlock();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }

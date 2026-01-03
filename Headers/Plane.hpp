@@ -32,21 +32,21 @@ private :
 	
 	CurrentState state_;
 
-	bool isEvading;
+	bool isEvading = false;
 
 public:
-	Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, std::mutex& mtx, APP* app);
+	Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, APP* app);
 
 	void run() override;
 
-	// Actions initiées par l’avion
+	// Actions initiï¿½es par lï¿½avion
 	bool requestLanding();
 	bool requestTakeoff();
 
 	void requestLanding2();
 	void requestTakeoff2();
 
-	// Références vers contrôleurs
+	// Rï¿½fï¿½rences vers contrï¿½leurs
 	void setAPP(APP* app);
 	void setAltitude(double altitude);
 	//void setTWR(TWR* twr);

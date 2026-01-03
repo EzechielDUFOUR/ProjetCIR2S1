@@ -20,7 +20,7 @@ private:
 	CCR* ccr_ = nullptr;
 
 public:
-	APP(const std::string& code, Position& pos, TWR* twr, const double& radius, std::mutex& mtx, CCR* ccr);
+	APP(const std::string& code, Position& pos, TWR* twr, const double& radius, CCR* ccr);
 
 	void run() override;
 

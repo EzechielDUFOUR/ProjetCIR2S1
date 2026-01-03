@@ -7,7 +7,7 @@
 #include <string>
 #include <algorithm>
 
-APP::APP(const std::string& code, Position& pos, TWR* twr, const double& radius, std::mutex& mtx, CCR* ccr) : Agent(code, mtx), pos_(pos), radius_(radius), twr_(twr), ccr_(ccr){}
+APP::APP(const std::string& code, Position& pos, TWR* twr, const double& radius, CCR* ccr) : Agent(code), pos_(pos), radius_(radius), twr_(twr), ccr_(ccr){}
 
 Position APP::getPos() {
 	return pos_;
@@ -18,6 +18,7 @@ double APP::getRadius() {
 }
 
 bool APP::receivePlane(Plane* p){
+	std::lock_guard<std::mutex> lock(mtx_);
 	auto it = std::find(PlanesInRange_.begin(), PlanesInRange_.end(), p);
 	if (it == PlanesInRange_.end()) {
 		PlanesInRange_.push_back(p);
@@ -28,6 +29,7 @@ bool APP::receivePlane(Plane* p){
 }
 
 bool APP::deletePlane(Plane* p){
+	std::lock_guard<std::mutex> lock(mtx_);
 	auto it = std::find(PlanesInRange_.begin(), PlanesInRange_.end(), p);
 	if (it != PlanesInRange_.end()) {
 		PlanesInRange_.erase(it);
@@ -38,13 +40,19 @@ bool APP::deletePlane(Plane* p){
 
 void APP::run() {
 	while (running_) {
-		mtx_.lock();
 		std::vector<Plane*> toRemove;
-		for (auto p : PlanesInRange_) {
+		std::vector<Plane*> planesCopy;
+		{
+			std::lock_guard<std::mutex> lock(mtx_);
+			planesCopy = PlanesInRange_;
+		}
+		for (auto p : planesCopy) {
+			if (!p) continue;
 			double dx = p->getPos().x - pos_.x;
 			double dy = p->getPos().y - pos_.y;
 
-			if (dx * dx + dy * dy > radius_ * radius_) {
+			// Ne pas retirer les avions en HOLDING ou LANDING - ils sont en train d'atterrir ici
+			if (dx * dx + dy * dy > radius_ * radius_ && p->getState() != HOLDING && p->getState() != LANDING) {
 				toRemove.push_back(p);
 			}
 
@@ -79,11 +87,12 @@ void APP::run() {
 
 		// retrait hors boucle
 		for (auto p : toRemove) {
-			ccr_->addPlane(p);
-			deletePlane(p);
-			std::cout << "[" << code_ << "]" << "Removed [" << p->getCode() << "] from " << getCode() << std::endl;
+			if (p) {
+				ccr_->addPlane(p);
+				deletePlane(p);
+				//std::cout << "[" << code_ << "]" << "Removed [" << p->getCode() << "] from " << getCode() << std::endl;
+			}
 		}
-		mtx_.unlock();
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 }

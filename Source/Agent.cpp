@@ -1,6 +1,6 @@
 #include "../Headers/Agent.hpp"
 
-Agent::Agent(const std::string& code, std::mutex& mtx) : code_(code), mtx_(mtx) {}
+Agent::Agent(const std::string& code) : code_(code) {}
 
 Agent::~Agent() {
     stop();  // s'assurer que le thread est arrêté à la destruction

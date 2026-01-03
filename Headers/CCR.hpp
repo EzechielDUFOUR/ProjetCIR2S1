@@ -16,7 +16,7 @@ private:
 	std::vector<Plane*> FlyingPlanes_;
 
 public:
-	CCR(const std::string& code, std::mutex& mtx);
+	CCR(const std::string& code);
 
 	void run() override;
 

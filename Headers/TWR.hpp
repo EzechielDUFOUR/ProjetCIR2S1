@@ -17,19 +17,19 @@ private:
 
 	std::vector<Plane*> parking_;
 	const int parkingSize_;
-	APP* app_;
+	//APP* app_;
 
 	std::deque<Plane*> waitingLine_;
 
 public:
-	TWR(const std::string& code, const int&parkingSize, Position& pos, std::mutex& mtx);
+	TWR(const std::string& code, const int&parkingSize, Position& pos);
 
 	void run() override;
 
-	// Demandées par APP
+	// Demandï¿½es par APP
 	// void requestLanding(Plane* p);
 
-	// Demandées par l’avion pour décoller
+	// Demandï¿½es par lï¿½avion pour dï¿½coller
 	bool requestTakeoff(Plane* p);
 	bool requestLanding(Plane* p);
 

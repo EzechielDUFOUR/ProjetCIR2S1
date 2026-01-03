@@ -15,5 +15,4 @@ void make_unitary(Position* pos){
 		pos->y /= norme;
 		pos->altitude /= norme;
 	}
-
 }

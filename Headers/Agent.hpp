@@ -6,7 +6,7 @@
 
 class Agent {
 public:
-	Agent(const std::string& code, std::mutex& mtx);
+	Agent(const std::string& code);
 	virtual ~Agent();
 
 	void start();       // lance le thread
@@ -18,7 +18,7 @@ public:
 	const std::string& getCode() const;
 
 protected:
-	std::mutex& mtx_;
+	mutable std::mutex mtx_;
 	std::string code_;
 	std::thread thread_;
 	bool running_ = false;
