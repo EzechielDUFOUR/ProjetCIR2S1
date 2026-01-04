@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <cmath>
 
 APP::APP(const std::string& code, Position& pos, TWR* twr, const double& radius, CCR* ccr) : Agent(code), pos_(pos), radius_(radius), twr_(twr), ccr_(ccr){}
 
@@ -28,7 +29,7 @@ bool APP::receivePlane(Plane* p){
 		}
 	}
 	
-	// Appel externe APR�S avoir rel�ch� le mutex
+	// Appel externe APR�S avoir rel�ch� le mutex
 	p->setAPP(this);
 	return true;
 }
@@ -53,41 +54,90 @@ void APP::run() {
 		}
 		for (auto p : planesCopy) {
 			if (!p) continue;
+			CurrentState pState = p->getState();
 			double dx = p->getPos().x - pos_.x;
 			double dy = p->getPos().y - pos_.y;
 
 			// Ne pas retirer les avions en HOLDING ou LANDING - ils sont en train d'atterrir ici
-			if (dx * dx + dy * dy > radius_ * radius_ && p->getState() != HOLDING && p->getState() != LANDING) {
+			if (dx * dx + dy * dy > radius_ * radius_ && pState != HOLDING && pState != LANDING) {
 				toRemove.push_back(p);
 			}
 
-		//	for (auto p2 : PlanesInRange_) {
-		//		if (p != p2) {
-		//			Position pFuture, p2Future;
-		//			// Calcul de la position future dans 5 ticks
-		//			pFuture.x = p->getPos().x + 5 * p->getTrajectory().x * p->getSpeed() / 360; pFuture.y = p->getPos().y + 5 * p->getTrajectory().y * p->getSpeed() / 360;
-		//			p2Future.x = p2->getPos().x + 5 * p2->getTrajectory().x * p2->getSpeed() / 360; p2Future.y = p2->getPos().y + 5 * p2->getTrajectory().y * p2->getSpeed() / 360;
+			// Ignorer les avions en HOLDING pour la détection de collision - ils sont en attente d'atterrissage
+			if (pState == HOLDING || pState == LANDING) continue;
 
-		//			double dx = pFuture.x - p2Future.x, dy = pFuture.y - p2Future.y;
-		//			double dist = sqrt(dx * dx + dy * dy);
-		//			if (p->getState() != HOLDING && p2->getState() != HOLDING) {
-		//				if (dist <= 10.0 && (p->getState() != EVASION || p2->getState() != EVASION) && abs(p->getPos().altitude - p2->getPos().altitude) <= 0.1) {
-		//					p->rotateTrajectory(-30);
-		//					p->changeState(EVASION);
-		//					p2->rotateTrajectory(-30);
-		//					p2->changeState(EVASION);
-		//					std::cout << "Collision entre " << p->getCode() << " et " << p2->getCode() << std::endl;
-		//				}
-		//				else if (sqrt((p->getPos().x - p2->getPos().x) * (p->getPos().x - p2->getPos().x) + (p->getPos().y - p2->getPos().y) * (p->getPos().y - p2->getPos().y)) >= 10.0 && p->getState() == EVASION && p2->getState() == EVASION) {
-		//					p->changeState(FLYING);
-		//					p->changeTarget(p->getTarget());
-		//					p2->changeState(FLYING);
-		//					p2->changeTarget(p2->getTarget());
-		//				}
-		//			}
+			// Gérer les avions en état EVASION pour les remettre en FLYING
+			if (pState == EVASION) {
+				bool hasNearbyCollision = false;
+				double minDist = 1000.0;
+				
+				// Vérifier s'il y a encore un risque de collision
+				for (auto p2 : planesCopy) {
+					if (p != p2 && p2) {
+						CurrentState p2State = p2->getState();
+						// Ne pas considérer les avions en HOLDING ou LANDING pour la détection de collision
+						if (p2State == HOLDING || p2State == LANDING) continue;
+						
+						Position pFuture, p2Future;
+						pFuture.x = p->getPos().x + 5 * p->getTrajectory().x * p->getSpeed() / 360;
+						pFuture.y = p->getPos().y + 5 * p->getTrajectory().y * p->getSpeed() / 360;
+						p2Future.x = p2->getPos().x + 5 * p2->getTrajectory().x * p2->getSpeed() / 360;
+						p2Future.y = p2->getPos().y + 5 * p2->getTrajectory().y * p2->getSpeed() / 360;
+						
+						double dxFuture = pFuture.x - p2Future.x, dyFuture = pFuture.y - p2Future.y;
+						double distFuture = sqrt(dxFuture * dxFuture + dyFuture * dyFuture);
+						
+						dxFuture = p->getPos().x - p2->getPos().x;
+						dyFuture = p->getPos().y - p2->getPos().y;
+						double distCurrent = sqrt(dxFuture * dxFuture + dyFuture * dyFuture);
+						
+						if (distFuture <= 10.0 && std::abs(p->getPos().altitude - p2->getPos().altitude) <= 0.1) {
+							hasNearbyCollision = true;
+							minDist = std::min(minDist, distCurrent);
+						}
+					}
+				}
+				
+				// Si pas de collision proche et suffisamment séparé, retourner vers l'objectif
+				if (!hasNearbyCollision || minDist >= 30.0) {
+					APP* target = p->getTarget();
+					if (target != nullptr) {
+						p->changeState(FLYING);
+						p->changeTarget(target);
+						std::cout << "[" << code_ << "] " << p->getCode() << " sortie d'evasion, retour vers " << target->getCode() << std::endl;
+					}
+				}
+				continue; // Ne pas faire la détection de collision normale pour les avions en EVASION (déjà géré)
+			}
 
-		//		}
-		//	}
+			// Détection de collision normale (uniquement pour FLYING)
+			if (pState == FLYING) {
+				for (auto p2 : planesCopy) {
+					if (p != p2 && p2) {
+						CurrentState p2State = p2->getState();
+						// Ne pas déclencher d'évasion si un des avions est en HOLDING ou LANDING
+						if (p2State == HOLDING || p2State == LANDING || p2State == EVASION) continue;
+						
+						Position pFuture, p2Future;
+						// Calcul de la position future dans 5 ticks
+						pFuture.x = p->getPos().x + 5 * p->getTrajectory().x * p->getSpeed() / 360;
+						pFuture.y = p->getPos().y + 5 * p->getTrajectory().y * p->getSpeed() / 360;
+						p2Future.x = p2->getPos().x + 5 * p2->getTrajectory().x * p2->getSpeed() / 360;
+						p2Future.y = p2->getPos().y + 5 * p2->getTrajectory().y * p2->getSpeed() / 360;
+						
+						double dxFuture = pFuture.x - p2Future.x, dyFuture = pFuture.y - p2Future.y;
+						double dist = sqrt(dxFuture * dxFuture + dyFuture * dyFuture);
+						
+						if (dist <= 10.0 && std::abs(p->getPos().altitude - p2->getPos().altitude) <= 0.1) {
+							p->rotateTrajectory(-30);
+							p->changeState(EVASION);
+							p2->rotateTrajectory(-30);
+							p2->changeState(EVASION);
+							std::cout << "[" << code_ << "] Collision entre " << p->getCode() << " et " << p2->getCode() << std::endl;
+						}
+					}
+				}
+			}
 		}
 
 		// retrait hors boucle
