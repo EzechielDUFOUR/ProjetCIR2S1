@@ -100,9 +100,28 @@ void CCR::run() {
 				double dist = sqrt(dx * dx + dy * dy);
 				if (p->getState() != HOLDING && p2->getState() != HOLDING) {
 					if (dist <= 10.0 && (p->getState() != EVASION || p2->getState() != EVASION) && std::abs(p->getPos().altitude - p2->getPos().altitude) <= 0.1) {
-						p->rotateTrajectory(-30);
+						// Calculer le vecteur relatif pour déterminer dans quel sens tourner
+						double relDx = p->getPos().x - p2->getPos().x;
+						double relDy = p->getPos().y - p2->getPos().y;
+						double relDist = sqrt(relDx * relDx + relDy * relDy);
+						if (relDist < 0.01) relDist = 0.01;
+						
+						// Vecteur perpendiculaire pour séparer les avions
+						double perpX = -relDy / relDist;
+						double perpY = relDx / relDist;
+						
+						// Calculer le produit scalaire pour déterminer le sens de rotation
+						double dotProduct = p->getTrajectory().x * perpX + p->getTrajectory().y * perpY;
+						
+						// Tourner les avions dans des directions opposées pour les séparer
+						if (dotProduct >= 0) {
+							p->rotateTrajectory(30);
+							p2->rotateTrajectory(-30);
+						} else {
+							p->rotateTrajectory(-30);
+							p2->rotateTrajectory(30);
+						}
 						p->changeState(EVASION);
-						p2->rotateTrajectory(-30);
 						p2->changeState(EVASION);
 						std::cout << "Collision entre " << p->getCode() << " et " << p2->getCode() << std::endl;
 					}
