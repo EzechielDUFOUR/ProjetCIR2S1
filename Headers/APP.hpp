@@ -13,14 +13,14 @@ struct Position;
 class APP : public Agent {
 private:
 	Position pos_;
-	// Journal* journal_;
+	Journal* journal_;
 	TWR* twr_ = nullptr;
 	std::vector<Plane*> PlanesInRange_;
 	const double radius_; // rayon d'action de l'APP
 	CCR* ccr_ = nullptr;
 
 public:
-	APP(const std::string& code, Position& pos, TWR* twr, const double& radius, CCR* ccr);
+	APP(const std::string& code, Position& pos, TWR* twr, const double& radius, CCR* ccr, Journal* journal = nullptr);
 
 	void run() override;
 

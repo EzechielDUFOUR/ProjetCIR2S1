@@ -10,9 +10,10 @@
 #include <cmath>
 #include <thread>
 #include <sstream>
+#include <iomanip>
 
-Plane::Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, APP* app) 
-	: Agent(code), speed_max_(speed_max), app_(app), target_(target), state_(PARKED) {
+Plane::Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, APP* app, Journal* journal) 
+	: Agent(code), speed_max_(speed_max), app_(app), target_(target), state_(PARKED), journal_(journal) {
 	pos_.x = spawn->getPos().x;
 	pos_.y = spawn->getPos().y;
 	pos_.altitude = 0;
@@ -202,7 +203,7 @@ void Plane::run() {
 				if (pos_.altitude >= 9.99) {
 					trajectory_.altitude = 0;
 					state_ = FLYING;
-					std::cout << "[" << code_ << "] passe en FLYING, piste liberee" << std::endl;
+					//std::cout << "[" << code_ << "] passe en FLYING, piste liberee" << std::endl;
 					shouldFreeRunway = true;
 				}
 			}
@@ -241,6 +242,8 @@ void Plane::run() {
 
 			if (localAltitude <= 0.1 && distance_to_app <= 1.0) {
 				bool shouldFreeRunway = false;
+				std::string planeCode;
+				std::string appCode;
 		
 				{
 					std::lock_guard<std::mutex> lock(mtx_);
@@ -251,13 +254,21 @@ void Plane::run() {
 						pos_.x = app_->getPos().x;
 						pos_.y = app_->getPos().y;
 						pos_.altitude = 0;
-						std::cout << "[" << code_ << "] a atterri a " << app_->getCode() << std::endl;
+						planeCode = code_;
+						appCode = app_->getCode();
+						//std::cout << "[" << code_ << "] a atterri a " << app_->getCode() << std::endl;
 						shouldFreeRunway = true;
 					}
 				}
 		
 				if (shouldFreeRunway) {
 					changeRunwayToFree();
+					// Logger l'atterrissage
+					if (journal_) {
+						std::ostringstream oss;
+						oss << "[" << planeCode << "] atterrit à " << appCode;
+						journal_->logEvent(oss.str());
+					}
 				}
 			}
 		}

@@ -5,6 +5,7 @@
 #include "../Headers/TWR.hpp"
 #include "../Headers/CCR.hpp"
 #include "../Headers/Functions.hpp"
+#include "../Headers/Journal.hpp"
 #include <SFML/Graphics.hpp>
 #include <thread>
 
@@ -124,72 +125,74 @@ void initWindow(std::vector<APP*>& apps, std::vector<Plane*>& planes) {
 
 
 int main() {
-	CCR global_satellite("NASA");
+	Journal journal("../../../../journal.txt");
+	
+	CCR global_satellite("NASA", &journal);
 	Position Paris(917 * MAP_RESIZING_FACTOR, 532 * MAP_RESIZING_FACTOR, 0.0);
 
-	TWR TWR_Paris("TWR_Paris", 5, Paris);
-	APP APP_Paris("APP_Paris", Paris, &TWR_Paris, 50.0, &global_satellite);
+	TWR TWR_Paris("TWR_Paris", 5, Paris, &journal);
+	APP APP_Paris("APP_Paris", Paris, &TWR_Paris, 50.0, &global_satellite, &journal);
 
 	Position Ajaccio(1658 * MAP_RESIZING_FACTOR, 1653 * MAP_RESIZING_FACTOR, 0.0);
-	TWR TWR_Ajaccio("TWR_Ajaccio", 3, Ajaccio);
-	APP APP_Ajaccio("APP_Ajaccio", Ajaccio, &TWR_Ajaccio, 50.0, &global_satellite);
+	TWR TWR_Ajaccio("TWR_Ajaccio", 3, Ajaccio, &journal);
+	APP APP_Ajaccio("APP_Ajaccio", Ajaccio, &TWR_Ajaccio, 50.0, &global_satellite, &journal);
 
 	Position Lille(1021 * MAP_RESIZING_FACTOR, 239 * MAP_RESIZING_FACTOR, 0.0);
-	TWR TWR_Lille("TWR_Lille", 5, Lille);
-	APP APP_Lille("APP_Lille", Lille, &TWR_Lille, 50.0, &global_satellite);
+	TWR TWR_Lille("TWR_Lille", 5, Lille, &journal);
+	APP APP_Lille("APP_Lille", Lille, &TWR_Lille, 50.0, &global_satellite, &journal);
 
 	Position Perpignan(1005 * MAP_RESIZING_FACTOR, 1555 * MAP_RESIZING_FACTOR);
-	TWR TWR_Perpignan("TWR_Perpignan", 4, Perpignan);
-	APP APP_Perpignan("APP_Perpignan", Perpignan, &TWR_Perpignan, 50.0, &global_satellite);
+	TWR TWR_Perpignan("TWR_Perpignan", 4, Perpignan, &journal);
+	APP APP_Perpignan("APP_Perpignan", Perpignan, &TWR_Perpignan, 50.0, &global_satellite, &journal);
 
 	Position Marseille(1275 * MAP_RESIZING_FACTOR, 1458 * MAP_RESIZING_FACTOR);
-	TWR TWR_Marseille("TWR_Marseille", 6, Marseille);
-	APP APP_Marseille("APP_Marseille", Marseille, &TWR_Marseille, 50.0, &global_satellite);
+	TWR TWR_Marseille("TWR_Marseille", 6, Marseille, &journal);
+	APP APP_Marseille("APP_Marseille", Marseille, &TWR_Marseille, 50.0, &global_satellite, &journal);
 
 	Position Bordeaux(615 * MAP_RESIZING_FACTOR, 1200 * MAP_RESIZING_FACTOR);
-	TWR TWR_Bordeaux("TWR_Bordeaux", 4, Bordeaux);
-	APP APP_Bordeaux("APP_Bordeaux", Bordeaux, &TWR_Bordeaux, 50.0, &global_satellite);
+	TWR TWR_Bordeaux("TWR_Bordeaux", 4, Bordeaux, &journal);
+	APP APP_Bordeaux("APP_Bordeaux", Bordeaux, &TWR_Bordeaux, 50.0, &global_satellite, &journal);
 
 	Position Brest(180 * MAP_RESIZING_FACTOR, 626 * MAP_RESIZING_FACTOR);
-	TWR TWR_Brest("TWR_Brest", 3, Brest);
-	APP APP_Brest("APP_Brest", Brest, &TWR_Brest, 50.0, &global_satellite);
+	TWR TWR_Brest("TWR_Brest", 3, Brest, &journal);
+	APP APP_Brest("APP_Brest", Brest, &TWR_Brest, 50.0, &global_satellite, &journal);
 
 	// Avions pour Paris (5 places)
-	Plane A512("A512", SPEEDMAX, &APP_Lille, &TWR_Paris, &APP_Paris);
-	Plane B739("B739", SPEEDMAX, &APP_Ajaccio, &TWR_Paris, &APP_Paris);
-	Plane B740("B740", SPEEDMAX, &APP_Ajaccio, &TWR_Paris, &APP_Paris);
-	Plane B741("B741", SPEEDMAX, &APP_Ajaccio, &TWR_Paris, &APP_Paris);
+	Plane A512("A512", SPEEDMAX, &APP_Lille, &TWR_Paris, &APP_Paris, &journal);
+	Plane B739("B739", SPEEDMAX, &APP_Ajaccio, &TWR_Paris, &APP_Paris, &journal);
+	Plane B740("B740", SPEEDMAX, &APP_Ajaccio, &TWR_Paris, &APP_Paris, &journal);
+	Plane B741("B741", SPEEDMAX, &APP_Ajaccio, &TWR_Paris, &APP_Paris, &journal);
 
 	// Avions pour Lille (5 places)
-	Plane B737("B737", SPEEDMAX, &APP_Paris, &TWR_Lille, &APP_Lille);
-	Plane B738("B738", SPEEDMAX, &APP_Ajaccio, &TWR_Lille, &APP_Lille);
-	Plane PAX001("PAX001", SPEEDMAX, &APP_Bordeaux, &TWR_Lille, &APP_Lille);
-	Plane PAX002("PAX002", SPEEDMAX, &APP_Marseille, &TWR_Lille, &APP_Lille);
+	Plane B737("B737", SPEEDMAX, &APP_Paris, &TWR_Lille, &APP_Lille, &journal);
+	Plane B738("B738", SPEEDMAX, &APP_Ajaccio, &TWR_Lille, &APP_Lille, &journal);
+	Plane PAX001("PAX001", SPEEDMAX, &APP_Bordeaux, &TWR_Lille, &APP_Lille, &journal);
+	Plane PAX002("PAX002", SPEEDMAX, &APP_Marseille, &TWR_Lille, &APP_Lille, &journal);
 
 	// Avions pour Ajaccio (3 places)
-	Plane B744("B744", SPEEDMAX, &APP_Ajaccio, &TWR_Ajaccio,  &APP_Ajaccio);
-	Plane AJC001("AJC001", SPEEDMAX, &APP_Marseille, &TWR_Ajaccio,  &APP_Ajaccio);
+	Plane B744("B744", SPEEDMAX, &APP_Ajaccio, &TWR_Ajaccio,  &APP_Ajaccio, &journal);
+	Plane AJC001("AJC001", SPEEDMAX, &APP_Marseille, &TWR_Ajaccio,  &APP_Ajaccio, &journal);
 
 	// Avions pour Perpignan (4 places)
-	Plane PGN001("PGN001", SPEEDMAX, &APP_Marseille, &TWR_Perpignan,  &APP_Perpignan);
-	Plane PGN002("PGN002", SPEEDMAX, &APP_Bordeaux, &TWR_Perpignan,  &APP_Perpignan);
-	Plane PGN003("PGN003", SPEEDMAX, &APP_Ajaccio, &TWR_Perpignan,  &APP_Perpignan);
+	Plane PGN001("PGN001", SPEEDMAX, &APP_Marseille, &TWR_Perpignan,  &APP_Perpignan, &journal);
+	Plane PGN002("PGN002", SPEEDMAX, &APP_Bordeaux, &TWR_Perpignan,  &APP_Perpignan, &journal);
+	Plane PGN003("PGN003", SPEEDMAX, &APP_Ajaccio, &TWR_Perpignan,  &APP_Perpignan, &journal);
 
 	// Avions pour Marseille (6 places)
-	Plane B745("B745", SPEEDMAX, &APP_Ajaccio, &TWR_Marseille,  &APP_Marseille);
-	Plane B746("B746", SPEEDMAX, &APP_Ajaccio, &TWR_Marseille,  &APP_Marseille);
-	Plane MRS001("MRS001", SPEEDMAX, &APP_Paris, &TWR_Marseille,  &APP_Marseille);
-	Plane MRS002("MRS002", SPEEDMAX, &APP_Lille, &TWR_Marseille,  &APP_Marseille);
-	Plane MRS003("MRS003", SPEEDMAX, &APP_Bordeaux, &TWR_Marseille,  &APP_Marseille);
+	Plane B745("B745", SPEEDMAX, &APP_Ajaccio, &TWR_Marseille,  &APP_Marseille, &journal);
+	Plane B746("B746", SPEEDMAX, &APP_Ajaccio, &TWR_Marseille,  &APP_Marseille, &journal);
+	Plane MRS001("MRS001", SPEEDMAX, &APP_Paris, &TWR_Marseille,  &APP_Marseille, &journal);
+	Plane MRS002("MRS002", SPEEDMAX, &APP_Lille, &TWR_Marseille,  &APP_Marseille, &journal);
+	Plane MRS003("MRS003", SPEEDMAX, &APP_Bordeaux, &TWR_Marseille,  &APP_Marseille, &journal);
 
 	// Avions pour Bordeaux (4 places)
-	Plane B743("B743", SPEEDMAX, &APP_Ajaccio, &TWR_Bordeaux,  &APP_Bordeaux);
-	Plane BOD001("BOD001", SPEEDMAX, &APP_Paris, &TWR_Bordeaux,  &APP_Bordeaux);
-	Plane BOD002("BOD002", SPEEDMAX, &APP_Lille, &TWR_Bordeaux,  &APP_Bordeaux);
+	Plane B743("B743", SPEEDMAX, &APP_Ajaccio, &TWR_Bordeaux,  &APP_Bordeaux, &journal);
+	Plane BOD001("BOD001", SPEEDMAX, &APP_Paris, &TWR_Bordeaux,  &APP_Bordeaux, &journal);
+	Plane BOD002("BOD002", SPEEDMAX, &APP_Lille, &TWR_Bordeaux,  &APP_Bordeaux, &journal);
 
 	// Avions pour Brest (3 places)
-	Plane B747("B747", SPEEDMAX, &APP_Ajaccio, &TWR_Brest,  &APP_Brest);
-	Plane B748("B748", SPEEDMAX, &APP_Ajaccio, &TWR_Brest,  &APP_Brest);
+	Plane B747("B747", SPEEDMAX, &APP_Ajaccio, &TWR_Brest,  &APP_Brest, &journal);
+	Plane B748("B748", SPEEDMAX, &APP_Ajaccio, &TWR_Brest,  &APP_Brest, &journal);
 
 
 	global_satellite.addAPP(&APP_Paris);

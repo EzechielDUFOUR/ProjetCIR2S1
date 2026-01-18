@@ -7,8 +7,10 @@
 #include <string>
 #include <algorithm>
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 
-APP::APP(const std::string& code, Position& pos, TWR* twr, const double& radius, CCR* ccr) : Agent(code), pos_(pos), radius_(radius), twr_(twr), ccr_(ccr){}
+APP::APP(const std::string& code, Position& pos, TWR* twr, const double& radius, CCR* ccr, Journal* journal) : Agent(code), pos_(pos), radius_(radius), twr_(twr), ccr_(ccr), journal_(journal){}
 
 Position APP::getPos() {
 	return pos_;
@@ -91,7 +93,7 @@ void APP::run() {
 						dyFuture = p->getPos().y - p2->getPos().y;
 						double distCurrent = sqrt(dxFuture * dxFuture + dyFuture * dyFuture);
 						
-						if (distFuture <= 10.0 && std::abs(p->getPos().altitude - p2->getPos().altitude) <= 0.1) {
+						if (distFuture <= 30.0 && std::abs(p->getPos().altitude - p2->getPos().altitude) <= 0.1) {
 							hasNearbyCollision = true;
 							minDist = std::min(minDist, distCurrent);
 						}
@@ -99,12 +101,12 @@ void APP::run() {
 				}
 				
 				// Si pas de collision proche et suffisamment séparé, retourner vers l'objectif
-				if (!hasNearbyCollision || minDist >= 30.0) {
+				if (!hasNearbyCollision || minDist >= 50.0) {
 					APP* target = p->getTarget();
 					if (target != nullptr) {
 						p->changeState(FLYING);
 						p->changeTarget(target);
-						std::cout << "[" << code_ << "] " << p->getCode() << " sortie d'evasion, retour vers " << target->getCode() << std::endl;
+						//std::cout << "[" << code_ << "] " << p->getCode() << " sortie d'evasion, retour vers " << target->getCode() << std::endl;
 					}
 				}
 				continue; // Ne pas faire la détection de collision normale pour les avions en EVASION (déjà géré)
@@ -152,7 +154,20 @@ void APP::run() {
 							}
 							p->changeState(EVASION);
 							p2->changeState(EVASION);
-							std::cout << "[" << code_ << "] Collision entre " << p->getCode() << " et " << p2->getCode() << std::endl;
+							//std::cout << "[" << code_ << "] Collision entre " << p->getCode() << " et " << p2->getCode() << std::endl;
+							
+							// Logger la collision prévue
+							if (journal_) {
+								std::string p1Code, p2Code;
+								{
+									std::lock_guard<std::mutex> lock(mtx_);
+									p1Code = p->getCode();
+									p2Code = p2->getCode();
+								}
+								std::ostringstream oss;
+								oss << "[" << p1Code << "] collision prévue avec [" << p2Code << "]";
+								journal_->logEvent(oss.str());
+							}
 						}
 					}
 				}

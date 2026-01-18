@@ -6,8 +6,10 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <sstream>
+#include <iomanip>
 
-TWR::TWR(const std::string& code, const int& parkingSize, Position& pos) : Agent(code), parkingSize_(parkingSize), pos_(pos), runwayFree_(true) {}
+TWR::TWR(const std::string& code, const int& parkingSize, Position& pos, Journal* journal) : Agent(code), parkingSize_(parkingSize), pos_(pos), runwayFree_(true), journal_(journal) {}
 
 Position TWR::getPos() {
 	return pos_;
@@ -82,7 +84,7 @@ void TWR::run() {
 							// Cela permet aux décollages de passer en priorité
 							waitingLine_.pop_front();
 							waitingLine_.push_back(p);
-							std::cout << "[" << getCode() << "] Parking plein - " << p->getCode() << " remis en fin de file" << std::endl;
+							//std::cout << "[" << getCode() << "] Parking plein - " << p->getCode() << " remis en fin de file" << std::endl;
 						}
 					}
 					else {
@@ -100,13 +102,27 @@ void TWR::run() {
 				appForTakeoff->receivePlane(planeToTakeoff);
 				planeToTakeoff->setAltitude(0.2);
 				planeToTakeoff->changeState(TAKINGOFF);
-				std::cout << "[" << getCode() << "] " << planeToTakeoff->getCode() << " autorise au decollage" << std::endl;
+				//std::cout << "[" << getCode() << "] " << planeToTakeoff->getCode() << " autorise au decollage" << std::endl;
+				
+				// Logger le décollage
+				if (journal_) {
+					std::string planeCode;
+					std::string twrCode;
+					{
+						std::lock_guard<std::mutex> lock(mtx_);
+						planeCode = planeToTakeoff->getCode();
+						twrCode = getCode();
+					}
+					std::ostringstream oss;
+					oss << "[" << planeCode << "] décolle de " << twrCode;
+					journal_->logEvent(oss.str());
+				}
 			}
 		
 			if (planeToLand) {
 				planeToLand->setAltitude(-0.2);
 				planeToLand->changeState(LANDING);
-				std::cout << "[" << getCode() << "] " << planeToLand->getCode() << " autorise l'atterrissage" << std::endl;
+				//std::cout << "[" << getCode() << "] " << planeToLand->getCode() << " autorise l'atterrissage" << std::endl;
 			}
 		}
 		// Met en HOLDING ceux qui attendent

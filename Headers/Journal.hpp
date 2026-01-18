@@ -8,7 +8,7 @@ public:
 	Journal(const std::string& filename);
 	~Journal();
 
-	void logEvent(const std::string& eventType, const std::string& jsonData);
+	void logEvent(const std::string& message);
 
 private:
 	std::ofstream ofs_;

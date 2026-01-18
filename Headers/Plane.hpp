@@ -18,7 +18,7 @@ enum CurrentState { LANDING, TAKINGOFF, PARKED, FLYING, EMERGENCY, HOLDING, EVAS
 class Plane : public Agent {
 private :
 
-	// Journal* journal_;
+	Journal* journal_;
 	APP* app_ = nullptr;
 	APP* target_ = nullptr;
 	// TWR* twr_ = nullptr;
@@ -35,7 +35,7 @@ private :
 	bool isEvading = false;
 
 public:
-	Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, APP* app);
+	Plane(const std::string& code, double speed_max, APP* target, TWR* spawn, APP* app, Journal* journal = nullptr);
 
 	void run() override;
 

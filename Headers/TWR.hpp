@@ -11,7 +11,7 @@ class TWR : public Agent {
 private:
 	Position pos_;
 
-	//Journal* journal_;
+	Journal* journal_;
 
 	bool runwayFree_ = true;  // Retiré volatile - la protection mutex suffit
 
@@ -22,7 +22,7 @@ private:
 	std::deque<Plane*> waitingLine_;
 
 public:
-	TWR(const std::string& code, const int& parkingSize, Position& pos);
+	TWR(const std::string& code, const int& parkingSize, Position& pos, Journal* journal = nullptr);
 
 	void run() override;
 

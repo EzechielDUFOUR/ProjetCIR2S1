@@ -12,11 +12,11 @@ class CCR : public Agent {
 private:
 
 	std::vector<APP*> AllAPP_;
-	// Journal* journal_;
+	Journal* journal_;
 	std::vector<Plane*> FlyingPlanes_;
 
 public:
-	CCR(const std::string& code);
+	CCR(const std::string& code, Journal* journal = nullptr);
 
 	void run() override;
 
